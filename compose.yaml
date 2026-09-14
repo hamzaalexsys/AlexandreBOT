@@ -1,0 +1,10 @@
+services:
+  school-gateway:
+    build: ./services/school-gateway
+    env_file: ./services/school-gateway/.env
+    ports:
+      - "127.0.0.1:8788:8788"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped

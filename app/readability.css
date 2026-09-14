@@ -1,0 +1,108 @@
+/* Pastel surfaces, readable text and generous touch targets. */
+.child-shell .bubble.assistant {
+  color: #5e4c75;
+}
+.parent-shell .bubble.assistant {
+  color: #49603d;
+}
+.child-shell .milo-welcome p,
+.child-shell .board-caption p {
+  color: #69728a;
+}
+.child-shell .notebook-note,
+.child-shell .simulation-note,
+.child-shell .chat-disclaimer {
+  color: #746c82;
+}
+.child-shell .experiment-range > span,
+.child-shell .experiment-range strong,
+.child-shell .experiment-range select {
+  color: #635479;
+}
+.child-shell .notebook-bar strong,
+.child-shell .chat-suggestions button {
+  color: #695780;
+}
+.child-shell .play-button {
+  background: #7966ba;
+  box-shadow: 0 3px 0 #5c4998;
+}
+.child-shell .composer textarea {
+  color: #4e3e62;
+}
+.child-shell .composer textarea::placeholder {
+  color: #897b98;
+}
+.child-shell .ask-drawing {
+  color: #85532d;
+}
+.parent-shell .parent-greeting p,
+.parent-shell .observation p,
+.parent-shell .parent-footnote {
+  color: #657552;
+}
+.parent-shell .support p,
+.parent-shell .teacher-note p {
+  color: #7f6845;
+}
+.parent-shell .learning-status {
+  color: #546f39;
+}
+.parent-shell .teacher-note small,
+.parent-shell .learning-row small,
+.parent-shell .observation small {
+  color: #737b64;
+}
+.parent-shell .green-button {
+  background: #617e4d;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
+  outline: 3px solid #7966ba;
+  outline-offset: 3px;
+}
+@media (min-width: 1000px) {
+  .child-main {
+    padding-top: 20px;
+  }
+  .milo-welcome {
+    min-height: 160px;
+    margin-bottom: 18px;
+    gap: 24px;
+  }
+  .welcome-fox {
+    flex-basis: 155px;
+  }
+  .welcome-fox .avatar-float {
+    width: 150px;
+  }
+  .milo-welcome h1 {
+    font-size: 38px;
+    margin: 10px 0;
+  }
+  .explore-strip {
+    margin-bottom: 20px;
+  }
+  .board-caption {
+    padding: 18px 23px 16px;
+  }
+  .board-caption h2 {
+    font-size: 23px;
+  }
+}
+
+.mini-avatar .avatar-float {
+  width: 55px;
+  min-width: 55px;
+  height: 55px;
+}
+.mini-avatar {
+  overflow: visible;
+}
+.mini-avatar svg {
+  width: 100%;
+  height: 100%;
+}

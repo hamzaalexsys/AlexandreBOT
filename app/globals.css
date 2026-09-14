@@ -1,0 +1,469 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;650;700&family=Nunito:wght@400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+:root {
+  --ink: #253d32;
+  --muted: #737c71;
+  --green: #3e654e;
+  --orange: #ee7d3b;
+  --paper: #fcfaf6;
+  --line: #e8e8dd;
+  --font-sans: "Nunito", "Noto Sans Arabic", sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+button,
+a,
+input,
+textarea,
+select {
+  outline-offset: 5px;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #ee7d3b;
+}
+button {
+  color: inherit;
+}
+svg {
+  flex-shrink: 0;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+button {
+  border: 0;
+  background: none;
+}
+a {
+  color: inherit;
+}
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+}
+::selection {
+  background: #ffddb6;
+}
+.entry {
+  min-height: 100dvh;
+  background:
+    radial-gradient(ellipse at 4% 55%, #ffedda 0, transparent 35%),
+    radial-gradient(ellipse at 96% 66%, #e8edde 0, transparent 32%), #fcfaf6;
+}
+.entry-header {
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5.5%;
+  border-bottom: 1px solid #e9e7df;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 25px;
+  letter-spacing: -1px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+.brand-light {
+  font-weight: 500;
+  color: #87947e;
+}
+.brand small {
+  display: block;
+  font:
+    600 9px "DM Sans",
+    sans-serif;
+  letter-spacing: 1.8px;
+  margin-top: 7px;
+  color: #7f8778;
+}
+.brand-symbol {
+  background: #42634a;
+  color: #fff2d9;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  font-weight: 800;
+  position: relative;
+  padding-bottom: 8px;
+}
+.brand-symbol span {
+  position: absolute;
+  font-size: 20px;
+  color: #ffc36c;
+  right: 0;
+  top: 0;
+}
+.language-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  padding: 10px 16px;
+  background: #fff;
+}
+.welcome {
+  max-width: 980px;
+  margin: auto;
+  padding: 48px 24px 35px;
+  text-align: center;
+}
+.eyebrow {
+  font:
+    700 12px "DM Sans",
+    sans-serif;
+  letter-spacing: 2px;
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  justify-content: center;
+}
+.eyebrow > span {
+  width: 7px;
+  height: 7px;
+  background: #f59455;
+  border-radius: 50%;
+}
+.welcome h1 {
+  font-size: clamp(36px, 4.1vw, 58px);
+  font-weight: 900;
+  letter-spacing: -2px;
+  margin: 20px 0;
+  position: relative;
+  display: inline-block;
+}
+.welcome h1 em {
+  font-style: normal;
+  color: var(--orange);
+}
+.title-spark {
+  position: absolute;
+  color: #f0b957;
+  right: -48px;
+  top: -17px;
+  font-size: 46px;
+  animation: slow-turn 18s linear infinite;
+}
+.welcome-intro {
+  color: #7f8173;
+  font-size: 17px;
+  margin-bottom: 36px;
+}
+.role-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px;
+  text-align: start;
+}
+.role-card {
+  padding: 24px 28px 26px;
+  border: 1px solid #e8d5be;
+  border-radius: 28px;
+  text-align: start;
+  box-shadow: 0 6px 0 #ebdecd;
+  transition:
+    transform 0.22s,
+    box-shadow 0.22s;
+  background: #fff1df;
+}
+.role-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 11px 0 #ebdecd;
+}
+.parent-choice {
+  background: #eaf0e3;
+  border-color: #d2ddc8;
+  box-shadow: 0 6px 0 #d9e2cf;
+}
+.parent-choice:hover {
+  box-shadow: 0 11px 0 #d9e2cf;
+}
+.role-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.pill {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff80;
+  border-radius: 30px;
+  padding: 6px 11px;
+}
+.avatar-stage {
+  height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.avatar-stage .avatar-float {
+  width: 200px;
+}
+.avatar-float {
+  width: 210px;
+  animation: bob 5s ease-in-out infinite;
+}
+.avatar-float svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.doodle {
+  position: absolute;
+  color: #eab676;
+  font-weight: 800;
+  font-size: 28px;
+}
+.d1 {
+  top: 38px;
+  left: 35px;
+}
+.d2 {
+  right: 10px;
+  top: 78px;
+  transform: rotate(12deg);
+  font-size: 20px;
+}
+.d3 {
+  right: 40px;
+  bottom: 19px;
+}
+.parent-choice .doodle {
+  color: #91a17d;
+}
+.role-card h2 {
+  font-size: 27px;
+  font-weight: 900;
+  margin-top: 12px;
+}
+.role-card p {
+  color: #767d6c;
+  font-size: 16px;
+  min-height: 50px;
+  margin: 12px 0 22px;
+}
+.role-action {
+  border-top: 1px solid #d6bda14d;
+  padding-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 800;
+}
+.entry-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #828777;
+  margin-top: 29px;
+}
+.entry-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 5.5%;
+  font-size: 13px;
+  color: #8b8c7e;
+}
+.entry-footer > span:last-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.error {
+  color: #a53522;
+  background: #fff0e9;
+  padding: 12px;
+  border-radius: 12px;
+  margin-top: 12px;
+}
+.avatar-eyes {
+  transform-origin: center;
+  animation: blink 6s infinite;
+}
+.fox-tail {
+  transform-origin: 195px 210px;
+  animation: tail 3s ease-in-out infinite;
+}
+.fox-wave {
+  transform-origin: 186px 187px;
+  animation: wave 5s ease-in-out infinite;
+}
+.speaking .avatar-mouth {
+  animation: talk 0.4s alternate infinite;
+  transform-origin: center;
+}
+.happy {
+  animation: celebrate 0.55s ease-in-out 3;
+}
+.happy .avatar-eyes {
+  transform: scaleY(0.4);
+}
+@keyframes bob {
+  50% {
+    transform: translateY(-8px) rotate(1deg);
+  }
+}
+@keyframes blink {
+  0%,
+  43%,
+  47%,
+  100% {
+    transform: scaleY(1);
+  }
+  45% {
+    transform: scaleY(0.08);
+  }
+}
+@keyframes tail {
+  50% {
+    transform: rotate(10deg);
+  }
+}
+@keyframes wave {
+  0%,
+  75%,
+  100% {
+    transform: rotate(0);
+  }
+  82%,
+  94% {
+    transform: rotate(-9deg);
+  }
+  88% {
+    transform: rotate(6deg);
+  }
+}
+@keyframes talk {
+  to {
+    transform: scaleY(1.3);
+  }
+}
+@keyframes celebrate {
+  50% {
+    transform: translateY(-18px) rotate(-5deg);
+  }
+}
+@keyframes slow-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 640px) {
+  .entry-header {
+    height: 80px;
+    padding: 0 20px;
+  }
+  .brand {
+    font-size: 21px;
+  }
+  .brand small {
+    font-size: 7px;
+    letter-spacing: 1px;
+  }
+  .brand-symbol {
+    width: 38px;
+    height: 38px;
+    font-size: 34px;
+  }
+  .language-button {
+    padding: 8px 11px;
+    font-size: 14px;
+  }
+  .welcome {
+    padding: 32px 20px;
+  }
+  .welcome h1 {
+    letter-spacing: -1px;
+  }
+  .title-spark {
+    font-size: 27px;
+    right: -19px;
+    top: -10px;
+  }
+  .welcome-intro {
+    font-size: 16px;
+  }
+  .role-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .role-card {
+    padding: 20px 24px;
+  }
+  .avatar-stage {
+    height: 150px;
+  }
+  .avatar-stage .avatar-float {
+    width: 170px;
+  }
+  .role-card h2 {
+    margin-top: 2px;
+  }
+  .role-card p {
+    min-height: 0;
+    margin-bottom: 15px;
+  }
+  .entry-footer {
+    padding: 20px;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .entry-note {
+    font-size: 12px;
+  }
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *:before,
+  *:after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

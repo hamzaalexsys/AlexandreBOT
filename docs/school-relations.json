@@ -1,0 +1,373 @@
+[
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "QuestionId",
+    "sourceSchema": "dbo",
+    "sourceTable": "AffectationExerciceQuestions",
+    "targetTable": "Questions"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "ReglementId",
+    "sourceSchema": "dbo",
+    "sourceTable": "AspNetUsers1",
+    "targetTable": "Reglements"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "SousCategorieId",
+    "sourceSchema": "dbo",
+    "sourceTable": "Competences1",
+    "targetTable": "SousCategorieCompetences1"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "TypeId",
+    "sourceSchema": "dbo",
+    "sourceTable": "Questions",
+    "targetTable": "TypeDifficultes"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "TypeReglementId",
+    "sourceSchema": "dbo",
+    "sourceTable": "Reglements",
+    "targetTable": "TypesReglements"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "TypologieId",
+    "sourceSchema": "dbo",
+    "sourceTable": "Exercices",
+    "targetTable": "TypologieExercices"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "VilleId",
+    "sourceSchema": "dbo",
+    "sourceTable": "Ecoles",
+    "targetTable": "Villes"
+  },
+  {
+    "targetColumn": "CompetanceCible_Id",
+    "sourceColumn": "CompetenceVideo_CompetenceCibleId",
+    "sourceSchema": "dbo",
+    "sourceTable": "CompetenceVideo",
+    "targetTable": "CompetanceCible"
+  },
+  {
+    "targetColumn": "CompetanceCible_Id",
+    "sourceColumn": "CompetenceId",
+    "sourceSchema": "dbo",
+    "sourceTable": "VideosCompetences",
+    "targetTable": "CompetanceCible"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "AssignmentId",
+    "sourceSchema": "dbo",
+    "sourceTable": "ImmersiveReaderSessions",
+    "targetTable": "ImmersiveReaderAssignments"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "ContentId",
+    "sourceSchema": "dbo",
+    "sourceTable": "ImmersiveReaderAssignments",
+    "targetTable": "ImmersiveReaderContents"
+  },
+  {
+    "targetColumn": "EtudiantInscr_ID",
+    "sourceColumn": "EtudiantInscr_ID",
+    "sourceSchema": "dbo",
+    "sourceTable": "PaimentInscr",
+    "targetTable": "EtudiantInscr"
+  },
+  {
+    "targetColumn": "EtudiantInscr_ID",
+    "sourceColumn": "EtudiantInscr_ID",
+    "sourceSchema": "dbo",
+    "sourceTable": "Scolarite_Option_EtudiantInscr",
+    "targetTable": "EtudiantInscr"
+  },
+  {
+    "targetColumn": "EtudiantNiveauAnnee_ID",
+    "sourceColumn": "SoutienAffectation_EtudiantNiveauAnneeId",
+    "sourceSchema": "dbo",
+    "sourceTable": "SeanceSoutien_Affectation",
+    "targetTable": "Etudiant_Niveau_Annee"
+  },
+  {
+    "targetColumn": "ScolariteOptionEtudiantInscr_ID",
+    "sourceColumn": "ScolariteOptionEtudiantInscr_ID",
+    "sourceSchema": "dbo",
+    "sourceTable": "Paiment_OptionInscr",
+    "targetTable": "Scolarite_Option_EtudiantInscr"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "UserId",
+    "sourceSchema": "dbo",
+    "sourceTable": "AspNetUserClaims",
+    "targetTable": "AspNetUsers1"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "UserId",
+    "sourceSchema": "dbo",
+    "sourceTable": "AspNetUserLogins",
+    "targetTable": "AspNetUsers1"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "UserId",
+    "sourceSchema": "dbo",
+    "sourceTable": "AspNetUserRoles",
+    "targetTable": "AspNetUsers1"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "UserId",
+    "sourceSchema": "dbo",
+    "sourceTable": "AspNetUserTokens",
+    "targetTable": "AspNetUsers1"
+  },
+  {
+    "targetColumn": "EtudiantInscr_ID",
+    "sourceColumn": "EtudiantInscr_ID",
+    "sourceSchema": "dbo",
+    "sourceTable": "PaimentInscrJunior",
+    "targetTable": "EtudiantInscrJunior"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "AffectationExerciceId",
+    "sourceSchema": "dbo",
+    "sourceTable": "AffectationExerciceQuestions",
+    "targetTable": "AffectationsExercices"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "AnneeScolaireId",
+    "sourceSchema": "dbo",
+    "sourceTable": "EffectifsEcoles",
+    "targetTable": "AnneesScolaires"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "AnneeId",
+    "sourceSchema": "dbo",
+    "sourceTable": "Eleves1",
+    "targetTable": "AnneesScolaires"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "AnneeId",
+    "sourceSchema": "dbo",
+    "sourceTable": "Reglements",
+    "targetTable": "AnneesScolaires"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "RoleId",
+    "sourceSchema": "dbo",
+    "sourceTable": "AspNetRoleClaims",
+    "targetTable": "AspNetRoles"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "RoleId",
+    "sourceSchema": "dbo",
+    "sourceTable": "AspNetUserRoles",
+    "targetTable": "AspNetRoles"
+  },
+  {
+    "targetColumn": "Matiere_ID",
+    "sourceColumn": "CourseId",
+    "sourceSchema": "dbo",
+    "sourceTable": "ImmersiveReaderContents",
+    "targetTable": "Matiere"
+  },
+  {
+    "targetColumn": "SeanceSoutien_Id",
+    "sourceColumn": "SoutienAffectation_SeanceSoutienId",
+    "sourceSchema": "dbo",
+    "sourceTable": "SeanceSoutien_Affectation",
+    "targetTable": "Seance_Soutien"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "CategorieId",
+    "sourceSchema": "dbo",
+    "sourceTable": "SousCategorieCompetences1",
+    "targetTable": "CategoriesCompetences1"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "ClasseId",
+    "sourceSchema": "dbo",
+    "sourceTable": "Eleves1",
+    "targetTable": "Classes1"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "ClasseId",
+    "sourceSchema": "dbo",
+    "sourceTable": "ProfesseursClasses1",
+    "targetTable": "Classes1"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "EcoleId",
+    "sourceSchema": "dbo",
+    "sourceTable": "AspNetUsers1",
+    "targetTable": "Ecoles"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "EcoleId",
+    "sourceSchema": "dbo",
+    "sourceTable": "Classes1",
+    "targetTable": "Ecoles"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "EcoleId",
+    "sourceSchema": "dbo",
+    "sourceTable": "EffectifsEcoles",
+    "targetTable": "Ecoles"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "EcoleId",
+    "sourceSchema": "dbo",
+    "sourceTable": "Professeurs1",
+    "targetTable": "Ecoles"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "EcoleId",
+    "sourceSchema": "dbo",
+    "sourceTable": "Reglements",
+    "targetTable": "Ecoles"
+  },
+  {
+    "targetColumn": "Niveau_ID",
+    "sourceColumn": "LevelId",
+    "sourceSchema": "dbo",
+    "sourceTable": "ImmersiveReaderContents",
+    "targetTable": "Niveau"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "ExerciceId",
+    "sourceSchema": "dbo",
+    "sourceTable": "AffectationsExercices",
+    "targetTable": "Exercices"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "ExerciceId",
+    "sourceSchema": "dbo",
+    "sourceTable": "ExercicesCompetences",
+    "targetTable": "Exercices"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "ExerciceId",
+    "sourceSchema": "dbo",
+    "sourceTable": "Questions",
+    "targetTable": "Exercices"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "ExerciceId",
+    "sourceSchema": "dbo",
+    "sourceTable": "Badges",
+    "targetTable": "Exercices"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "MatiereId",
+    "sourceSchema": "dbo",
+    "sourceTable": "CategoriesCompetences1",
+    "targetTable": "Matieres1"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "MatiereId",
+    "sourceSchema": "dbo",
+    "sourceTable": "ProfesseursClasses1",
+    "targetTable": "Matieres1"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "MatiereId",
+    "sourceSchema": "dbo",
+    "sourceTable": "ProfesseursMatieres",
+    "targetTable": "Matieres1"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "NiveauId",
+    "sourceSchema": "dbo",
+    "sourceTable": "CategoriesCompetences1",
+    "targetTable": "Niveaux1"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "NiveauId",
+    "sourceSchema": "dbo",
+    "sourceTable": "Classes1",
+    "targetTable": "Niveaux1"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "NiveauId",
+    "sourceSchema": "dbo",
+    "sourceTable": "ProfesseursMatieres",
+    "targetTable": "Niveaux1"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "PaysId",
+    "sourceSchema": "dbo",
+    "sourceTable": "Villes",
+    "targetTable": "Pays"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "ProfesseurId",
+    "sourceSchema": "dbo",
+    "sourceTable": "AspNetUsers1",
+    "targetTable": "Professeurs1"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "ProfesseurId",
+    "sourceSchema": "dbo",
+    "sourceTable": "ProfesseursClasses1",
+    "targetTable": "Professeurs1"
+  },
+  {
+    "targetColumn": "Id",
+    "sourceColumn": "ProfesseurId",
+    "sourceSchema": "dbo",
+    "sourceTable": "ProfesseursMatieres",
+    "targetTable": "Professeurs1"
+  },
+  {
+    "targetColumn": "Video_Id",
+    "sourceColumn": "CompetenceVideo_VideoId",
+    "sourceSchema": "dbo",
+    "sourceTable": "CompetenceVideo",
+    "targetTable": "Video"
+  },
+  {
+    "targetColumn": "Video_Id",
+    "sourceColumn": "VideoId",
+    "sourceSchema": "dbo",
+    "sourceTable": "VideosCompetences",
+    "targetTable": "Video"
+  }
+]
