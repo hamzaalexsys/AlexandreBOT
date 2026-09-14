@@ -1,4 +1,4 @@
-# Vérifications — 14 septembre 2026
+# Vérifications — 15 septembre 2026
 
 ## Qualité du code
 
@@ -26,17 +26,21 @@ Aucun `INSERT`, `UPDATE`, `DELETE`, `MERGE`, DDL, changement d’utilisateur ou 
 | Plante et soleil | Dessin libre animé de dix objets |
 | Question arabe | Réponse arabe, tableau conservé |
 | Image de formes | Rond orange et carré bleu reconnus, tableau conservé |
+| Équation enfant `x + 1 = 0` | Traits violets reconnus, solution `x = −1` ajoutée à la page courante |
+| « J’ai dessiné quoi ? » | Description des traits de l’enfant, `keep`, aucune nouvelle page |
 | « Montre-moi dans le tableau » en mathématiques, français et arabe | Action `new` ou `update`, jamais `keep`, avec au moins quatre objets visibles |
 
 Alexandre a répondu à 15 questions automatiquement comparées aux valeurs SQL : parcours, comparaison annuelle, bilan global, forces, progression par matière, baisse et nuance, semestres, français, taille des échantillons, absence, motif manquant, résumé pour l’enseignant, questions à poser, actions à la maison et données manquantes. Les 15 réponses avaient `source=openrouter`, une scène parent nulle et les neuf lectures autorisées. Elles concordaient avec Azure SQL.
 
-Le correctif 503 ajoute trois tentatives réelles par appel pour les erreurs 429, 5xx, réseau et délai, le routage OpenRouter par latence avec repli compatible, le plugin officiel Response Healing et jusqu’à deux corrections lorsque le contrat métier ou l’ancrage factuel reste invalide. Le cas non déterministe qui associait 2024/2025 à une mauvaise classe et omettait les moyennes est désormais rejeté avant affichage. Aucun texte de secours local n’est affiché comme réponse IA.
+Le correctif 503 ajoute trois tentatives réelles par appel pour les erreurs 429, 5xx, réseau et délai, le routage OpenRouter par latence avec repli compatible, le plugin officiel Response Healing et jusqu’à deux corrections lorsque le contrat métier ou l’ancrage factuel reste invalide. Le cas non déterministe qui associait 2024/2025 à une mauvaise classe et omettait les moyennes est désormais rejeté avant affichage. Un faux positif qui rejetait « je ne peux pas affirmer qu’il n’y a pas de résultats » comme si Alexandre affirmait une absence de résultats est couvert par un test de régression. Aucun texte de secours local n’est affiché comme réponse IA.
+
+Le contrat navigateur accepte désormais les recommandations parent jusqu’à la même limite de 220 caractères que le serveur. Les réponses ne sont plus perdues après un HTTP 200. Les libellés internes et les dates SQL sont normalisés avant affichage : `OBSERVED AT`, `NOT RECORDED`, `FRANCAIS` et `2026-09-14` deviennent une formulation naturelle. La session locale de présentation dure huit heures afin d’éviter une reconnexion pendant la démonstration.
 
 ## Navigateur et mobile
 
 Le parcours a été rejoué dans le navigateur local : Parent ouvre Alexandre, Élève ouvre Milo, puis Parent ouvre à nouveau Alexandre. La course entre la reprise d’ancienne session et le clic utilisateur est corrigée.
 
-À l’entrée Milo, la page active est vide. Le carnet affichait les anciennes pages et permettait d’y revenir. À 390 × 844, les espaces Milo et Alexandre n’avaient aucun débordement horizontal. La fiche parent affichait les valeurs SQL réelles, l’avatar en djellaba et casquette, les états vides honnêtes et une conversation naturelle. Une question de résultats a ouvert « Résultats et tendances » ; la question d’absence suivante a ouvert « Présence » avec date, matière et statut. Le basculement arabe a produit `lang=ar` et `dir=rtl`.
+À l’entrée Milo, la page active est vide, le crayon est déjà sélectionné et une consigne courte indique où dessiner. Le carnet affichait les anciennes pages et permettait d’y revenir. Sur une page existante, Milo a reconnu les traits violets de l’enfant et la page est restée à 8/8 avec ses 2 traits après la réponse. À 390 × 844, les espaces Milo et Alexandre n’avaient aucun débordement horizontal. La fiche parent affichait les valeurs SQL réelles, l’avatar en djellaba et casquette, les états vides honnêtes et une conversation naturelle. Une question de résultats a ouvert « Résultats et tendances » ; la question d’absence suivante a ouvert « Présence » avec date, matière et statut. Le basculement arabe a produit `lang=ar` et `dir=rtl`. Aucun avertissement ni erreur n’était présent dans la console après le parcours final.
 
 ## Limite du pilote
 

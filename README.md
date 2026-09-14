@@ -28,7 +28,7 @@ La configuration web attend `SESSION_SECRET`, `OPENROUTER_API_KEY`, `OPENROUTER_
 
 1. Choisir **Je suis élève**. Une nouvelle page vide s’ouvre ; les anciennes pages restent dans le carnet.
 2. Demander à Milo : « Montre-moi pourquoi un ballon rebondit et sa trajectoire. » Modifier ensuite la hauteur, Terre/Lune, puis revenir à une ancienne page.
-3. Demander un dessin libre animé, toucher une figure, dessiner au doigt et utiliser **Milo, regarde !**. Une photo d’exercice peut aussi être expliquée par le modèle vision.
+3. Demander un dessin libre animé, toucher une figure et dessiner au doigt. Dès qu’un trait existe, la question suivante transmet automatiquement une capture du tableau à Milo ; **Expliquer mon dessin** permet aussi de l’interroger directement. Une photo d’exercice peut être expliquée par le modèle vision.
 4. Passer en arabe : l’interface devient RTL et les nouvelles réponses sont en arabe.
 5. Changer d’espace et choisir **Je suis parent**. Le clic reste dans l’espace Alexandre.
 6. Consulter la fiche réelle d’Aamar en lecture seule, puis demander une comparaison 2023/2024–2024/2025, son parcours, son absence actuelle ou des pistes pour préparer un échange avec l’enseignant. La fiche de gauche suit le sujet de la conversation.
@@ -53,13 +53,15 @@ npm.cmd run check:api
 npm.cmd run check:board
 npm.cmd run check:parent
 npm.cmd run check:vision
+npm.cmd run check:drawing
 ```
 
-Les quatre derniers contrôles utilisent de vrais appels OpenRouter et, pour Alexandre, de vraies lectures SQL. `check:parent` pose 15 questions de présentation et compare les réponses aux faits Azure attendus.
+Les cinq derniers contrôles utilisent de vrais appels OpenRouter et, pour Alexandre, de vraies lectures SQL. `check:parent` pose 15 questions de présentation et compare les réponses aux faits Azure attendus. `check:drawing` vérifie qu’une équation manuscrite est lue, résolue sur la page courante et ensuite décrite sans mutation.
 
 ## Documentation
 
 - [Architecture complète](docs/ARCHITECTURE.md)
 - [Exploitation locale](docs/OPERATIONS.md)
 - [Vérifications](docs/VERIFICATION.md)
+- [Scénario de présentation](docs/DEMO.md)
 - [Métadonnées SQL](docs/school-schema.json), [relations](docs/school-relations.json), [définitions de vues](docs/school-view-definitions.json)

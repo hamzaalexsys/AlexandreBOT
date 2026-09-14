@@ -9,6 +9,7 @@ export type Session = {
   nonce: string;
 };
 const encoder = new TextEncoder();
+const localPilotSessionSeconds = 8 * 60 * 60;
 async function key() {
   const secret = (env as Record<string, unknown>).SESSION_SECRET;
   if (typeof secret !== "string" || secret.length < 32)
@@ -59,7 +60,7 @@ export async function createSession(req: Request) {
       subject: data.role === "parent" ? "pilot-parent" : "demo-student",
       mode: data.role === "parent" ? "pilot" : "demo",
       enrollmentId: data.role === "parent" ? enrollmentId : undefined,
-      expires: Date.now() + 3600000,
+      expires: Date.now() + localPilotSessionSeconds * 1000,
       nonce: crypto.randomUUID(),
     };
     const payload = encode(encoder.encode(JSON.stringify(session)));
@@ -72,7 +73,7 @@ export async function createSession(req: Request) {
       { role: session.role, mode: session.mode },
       {
         headers: {
-          "Set-Cookie": `alex_session=${payload}.${sig}; HttpOnly; SameSite=Strict; Path=/; Max-Age=3600${new URL(req.url).protocol === "https:" ? "; Secure" : ""}`,
+          "Set-Cookie": `alex_session=${payload}.${sig}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${localPilotSessionSeconds}${new URL(req.url).protocol === "https:" ? "; Secure" : ""}`,
           "Cache-Control": "no-store",
         },
       },

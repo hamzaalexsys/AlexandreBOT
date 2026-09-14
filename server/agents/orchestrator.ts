@@ -297,7 +297,7 @@ export async function runAgent(
         result.scene = null;
         result.quiz = null;
         result.boardAction = "keep";
-        result.message = sanitizeParentAnswer(result.message);
+        result.message = sanitizeParentAnswer(result.message, input.lang);
         const groundingIssues = parentGroundingIssues(
           input.message,
           result.message,

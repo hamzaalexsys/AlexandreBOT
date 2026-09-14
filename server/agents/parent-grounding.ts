@@ -25,9 +25,20 @@ const plain = (value: string) =>
 const compact = (value: string) => plain(value).replace(/[^a-z0-9\u0600-\u06ff]/gu, "");
 
 const hasUnsupportedResultCoverageClaim = (value: string) =>
-  /(?:(aucun|pas de|non.{0,20}enregistr).{0,25}(resultat|note|moyenne).{0,100}(2025\/2026|2026\/2027)|(2025\/2026|2026\/2027).{0,100}(aucun|pas de|non.{0,20}enregistr).{0,25}(resultat|note|moyenne))/.test(
-    plain(value),
-  );
+  plain(value)
+    .split(/(?<=[.!?؟;])\s*|\n+/u)
+    .some((sentence) => {
+      const unsupported =
+        /(?:(aucun|pas de|absence de|non.{0,20}enregistr).{0,35}(resultat|note|moyenne).{0,120}(2025\/2026|2026\/2027)|(2025\/2026|2026\/2027).{0,120}(aucun|pas de|absence de|non.{0,20}enregistr).{0,35}(resultat|note|moyenne))/.test(
+          sentence,
+        );
+      if (!unsupported) return false;
+      const explicitlyQualified =
+        /(ne (?:peut|pouvons|permet|signifie).{0,70}(dire|affirmer|conclure|deduire)|impossible.{0,45}(dire|affirmer|conclure|deduire)|n.?ont.{0,35}pas ete (interroge|consulte)|n.?avons.{0,35}pas (interroge|consulte))/.test(
+          sentence,
+        );
+      return !explicitlyQualified;
+    });
 
 const dataFor = (facts: ParentFact[], tool: string) =>
   record(facts.find((fact) => fact.tool === tool)?.data);
@@ -86,13 +97,34 @@ export class ParentGroundingError extends Error {
   }
 }
 
-export function sanitizeParentAnswer(answer: string) {
+export function sanitizeParentAnswer(answer: string, lang: "fr" | "ar" = "fr") {
   const sentences = answer.split(/(?<=[.!?؟;])\s+|\n+/u);
   const kept = sentences.filter(
     (sentence) => !hasUnsupportedResultCoverageClaim(sentence),
   );
-  const sanitized = kept.join(" ").trim();
-  return sanitized || answer;
+  const sanitized = (kept.join(" ").trim() || answer)
+    .replace(/\(?\bOBSERVED AT\b\)?/giu, "")
+    .replace(
+      /\bNOT RECORDED\b/giu,
+      lang === "ar" ? "غير مسجل" : "non renseigné",
+    )
+    .replace(
+      /\bFRANCAIS\b/gu,
+      lang === "ar" ? "اللغة الفرنسية" : "français",
+    )
+    .replace(/\b(20\d{2})-(\d{2})-(\d{2})\b/g, (_, year, month, day) => {
+      const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+      return new Intl.DateTimeFormat(lang === "ar" ? "ar-MA" : "fr-FR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      }).format(date);
+    })
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,.;:!?؟])/g, "$1")
+    .trim();
+  return sanitized;
 }
 
 export function parentGroundingIssues(

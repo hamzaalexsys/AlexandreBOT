@@ -67,6 +67,8 @@ Chaque réponse contient `message`, `boardAction`, `scene`, `removeShapeIds`, `q
 
 `removeShapeIds` permet une suppression ciblée d’objets du modèle. Il n’existe pas de commande d’effacement global du carnet dans les outils de l’agent. Les quiz sont associés à leur page ; leurs corrections restent accessibles en revenant à cette page.
 
+Les traits violets sont stockés séparément des formes produites par Milo. Lorsqu’une page en contient, l’envoi d’un message capture automatiquement le rendu actuel et joint `childDrawing.strokeCount`. Le prompt et les validateurs attribuent alors les traits violets à l’enfant et les formes structurées à Milo. « J’ai dessiné quoi ? » doit conserver la page ; « résous/corrige/explique mon dessin » doit enrichir cette même page. Une réponse qui prétend que le tableau est vide, évalue les propres formes de Milo comme réponse de l’enfant ou remplace la page lors d’une simple inspection est refusée avant affichage.
+
 Le modèle produit des **descriptions de scènes**, jamais du JavaScript ou du SVG brut exécuté. Les primitives autorisées sont `circle`, `rect`, `text`, `line`, `path`, `sticker`. Les couleurs sont des hexadécimaux et les tracés n’acceptent que des commandes géométriques numériques. Le renderer React construit lui-même les éléments SVG. Aucun `eval`, HTML arbitraire, URL distante de scène ou script généré n’est accepté.
 
 Les animations déclaratives proposées sont flottement, pulsation, rotation, balancement, rebond et orbite. Une scène libre peut associer plusieurs formes, textes, dessins, révélations au toucher et déplacements. Le modèle choisit cette construction pour les sujets qui ne nécessitent pas de moteur physique.
@@ -74,6 +76,8 @@ Les animations déclaratives proposées sont flottement, pulsation, rotation, ba
 ### Outils de Milo
 
 `create_interactive_simulation` valide les paramètres et prépare une scène. L’appel est facultatif : un bonjour ou une question sur une figure ne force pas une nouvelle expérience. Le même contrat de simulation peut également être renvoyé directement dans une scène structurée.
+
+Le catalogue reste volontairement petit. La vision du tableau est un contexte multimodal, et le dessin SVG libre est une sortie structurée : les transformer en outils séparés ajouterait des choix qui se recouvrent. L’unique outil enfant regroupe les cinq expériences qui partagent le même contrat et le même moteur d’interaction ; il n’est exposé au modèle que lorsqu’une intention de simulation est détectée. Cette décision suit les recommandations de [l’OpenAI Practical Guide to Building Agents](https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/) et de [Writing effective tools for AI agents d’Anthropic](https://www.anthropic.com/engineering/writing-tools-for-agents) : outils distincts et bien définis, peu de chevauchement, activation liée au besoin et évaluations fondées sur les parcours réels. Un nouvel outil sera ajouté seulement s’il apporte un calcul déterministe ou un effet différent, avec son propre contrat et ses tests.
 
 | Expérience | Interactions | Modèle et limites |
 | --- | --- | --- |
@@ -135,7 +139,7 @@ Les requêtes sont limitées par `TOP`, triées, paramétrées et choisies dans 
 - Le service Docker est non privilégié, en lecture seule sur son filesystem, sans capacités supplémentaires, exposé sur l’interface locale par défaut. Toute exposition distante doit passer par TLS ou une connectivité privée.
 - Les cookies de démonstration sont HttpOnly, SameSite=Strict et signés HMAC ; Secure sous HTTPS. Les routes contrôlent origine, rôle, taille et contrat des entrées.
 - Les réponses de modèle sont validées avant rendu. OpenRouter Response Healing traite le JSON imparfait, trois appels réels sont tentés sur erreur transitoire, puis jusqu’à deux réponses corrigées sont demandées si le contrat ou l’ancrage factuel échoue. Les appels restent bornés dans le temps, en nombre d’outils et en taille. Une erreur conserve le tableau et permet une reprise.
-- Les photos partent uniquement lors d’un envoi explicite. Le frontend les redimensionne, elles ne sont pas enregistrées dans la base scolaire ni dans le carnet. L’appel OpenRouter interdit les fournisseurs déclarant collecter les données. Cela ne remplace pas une politique contractuelle de conservation pour un usage réel.
+- Une photo jointe part uniquement lors d’un envoi explicite. Lorsqu’un dessin enfant existe, l’interface annonce que Milo le verra et joint automatiquement une capture du tableau au prochain message. Ces images sont redimensionnées si nécessaire et ne sont enregistrées ni dans la base scolaire ni dans le carnet. L’appel OpenRouter interdit les fournisseurs déclarant collecter les données. Cela ne remplace pas une politique contractuelle de conservation pour un usage réel.
 
 ## 7. Persistance et exploitation
 
