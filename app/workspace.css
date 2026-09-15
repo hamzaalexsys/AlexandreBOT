@@ -164,6 +164,168 @@
   width: 100%;
   animation: bob 6s ease-in-out infinite;
 }
+.magic-labs {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(205px, 0.72fr) 2fr;
+  align-items: center;
+  gap: 22px;
+  margin: 0 0 22px;
+  padding: 18px 20px;
+  overflow: hidden;
+  border: 1px solid #e6dffc;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 2% 0%, #fff2bc 0 2px, transparent 3px),
+    radial-gradient(circle at 48% 100%, #ebdeff 0 2px, transparent 3px),
+    linear-gradient(115deg, #faf5ff, #fffaf0 54%, #eefbff);
+  background-size: 43px 43px, 57px 57px, auto;
+  box-shadow: 0 8px 26px #69539a12, inset 0 1px #fff;
+}
+.magic-labs::before,
+.magic-labs::after {
+  content: "✦";
+  position: absolute;
+  color: #b39be9;
+  opacity: 0.42;
+  animation: lab-sparkle 2.8s ease-in-out infinite;
+}
+.magic-labs::before {
+  top: 10px;
+  right: 17px;
+  font-size: 16px;
+}
+.magic-labs::after {
+  bottom: 7px;
+  left: 34%;
+  color: #ff9b67;
+  animation-delay: -1.3s;
+}
+.magic-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #8b72c7;
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: 1.5px;
+}
+.magic-labs-copy h2 {
+  margin: 5px 0 4px;
+  color: #4f426f;
+  font-size: 21px;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+}
+.magic-labs-copy p {
+  margin: 0;
+  color: #8f87a0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.magic-lab-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.magic-lab-cards > button {
+  position: relative;
+  min-width: 0;
+  min-height: 82px;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 11px;
+  border: 1px solid #ffffffaa;
+  border-radius: 18px;
+  color: #fff;
+  text-align: start;
+  box-shadow: 0 5px 0 #6e5d9140, 0 9px 20px #51406b1a;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.magic-lab-cards > button:hover,
+.magic-lab-cards > button:focus-visible {
+  transform: translateY(-4px) rotate(-0.4deg);
+  box-shadow: 0 8px 0 #6e5d9135, 0 15px 25px #51406b24;
+}
+.magic-lab-cards > button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #6e5d9140;
+}
+.color-lab-card {
+  background: linear-gradient(135deg, #4e3e81, #8e68c5 58%, #e3729b);
+}
+.geometry-lab-card {
+  background: linear-gradient(135deg, #f08d63, #e8686f 54%, #ae6cad);
+}
+.numbers-lab-card {
+  background: linear-gradient(135deg, #24959a, #48afa0 55%, #7ebf79);
+}
+.magic-lab-cards strong,
+.magic-lab-cards small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.magic-lab-cards strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+.magic-lab-cards small {
+  margin-top: 3px;
+  color: #ffffffc9;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.lab-card-art {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  background: #ffffff1f;
+  box-shadow: inset 0 0 0 1px #ffffff38;
+}
+.color-orbs i {
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+.color-orbs i:nth-child(1) { background: #ff304f; transform: translate(-8px, 5px); }
+.color-orbs i:nth-child(2) { background: #35f28a; transform: translate(8px, 5px); }
+.color-orbs i:nth-child(3) { background: #5291ff; transform: translateY(-8px); }
+.shape-gem {
+  color: #fff4b8;
+  font-size: 46px;
+  line-height: 1;
+  text-shadow: 0 4px 0 #874c7559;
+  animation: gentle-spin 8s linear infinite;
+}
+.number-hop {
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 900;
+}
+.number-hop i {
+  min-width: 20px;
+  padding: 4px 2px;
+  border-radius: 7px;
+  background: #ffffffd9;
+  color: #317c78;
+  text-align: center;
+  font-style: normal;
+}
+.number-hop b {
+  color: #ffef95;
+  font-size: 21px;
+  animation: number-hop 1.5s ease-in-out infinite;
+}
 .explore-strip {
   display: flex;
   align-items: center;
@@ -314,6 +476,38 @@
 .board-caption p {
   font-size: 14px;
   color: #9c99aa;
+}
+.board-caption-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.lab-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #f1ecff;
+  color: #806dc0;
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: 0.7px;
+}
+.lab-live i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #56c498;
+  box-shadow: 0 0 0 4px #56c49820;
+  animation: lab-live 1.8s ease-in-out infinite;
+}
+.concept-lab-board {
+  border-color: #dcd0f8;
+  box-shadow: 0 15px 38px #5f47751c, 0 4px 0 #ede8f6;
+}
+.concept-lab-board .scene-canvas {
+  box-shadow: inset 0 0 0 1px #ffffff80, 0 8px 25px #6c4c951a;
 }
 .icon-button {
   display: inline-flex;
@@ -1915,6 +2109,20 @@
   .explore-strip button {
     font-size: 13px;
   }
+  .magic-labs {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 14px;
+  }
+  .magic-lab-cards > button {
+    grid-template-columns: 43px minmax(0, 1fr);
+  }
+  .magic-lab-cards > button > svg {
+    display: none;
+  }
+  .lab-card-art {
+    width: 43px;
+    height: 43px;
+  }
   .parent-grid {
     grid-template-columns: minmax(0, 1fr) 325px;
     gap: 21px;
@@ -2034,6 +2242,40 @@
   .milo-welcome p {
     font-size: 13px;
     line-height: 1.6;
+  }
+  .magic-labs {
+    display: block;
+    margin-bottom: 18px;
+    padding: 15px 14px 13px;
+    border-radius: 19px;
+  }
+  .magic-labs-copy h2 {
+    font-size: 18px;
+  }
+  .magic-labs-copy p {
+    font-size: 11px;
+  }
+  .magic-lab-cards {
+    display: flex;
+    gap: 9px;
+    margin: 12px -2px 0;
+    padding: 2px 2px 7px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .magic-lab-cards::-webkit-scrollbar {
+    display: none;
+  }
+  .magic-lab-cards > button {
+    flex: 0 0 232px;
+    min-height: 72px;
+    grid-template-columns: 47px minmax(0, 1fr) 17px;
+    scroll-snap-align: start;
+  }
+  .lab-card-art {
+    width: 47px;
+    height: 47px;
   }
   .explore-strip {
     display: block;
@@ -2204,6 +2446,11 @@
   .experiment-badge {
     font-size: 11px;
     padding: 5px 8px;
+  }
+  .lab-live {
+    max-width: 115px;
+    font-size: 8px;
+    letter-spacing: 0.3px;
   }
   .simulation-note {
     font-size: 11px;
@@ -2395,6 +2642,21 @@
   .parent-footnote {
     font-size: 13px;
   }
+}
+
+@keyframes lab-sparkle {
+  0%, 100% { transform: scale(.75) rotate(0); opacity: .25; }
+  50% { transform: scale(1.35) rotate(22deg); opacity: .75; }
+}
+@keyframes gentle-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes number-hop {
+  0%, 100% { transform: translateY(3px) rotate(-8deg); }
+  50% { transform: translateY(-5px) rotate(8deg); }
+}
+@keyframes lab-live {
+  50% { transform: scale(1.25); box-shadow: 0 0 0 7px #56c49810; }
 }
 @media (max-width: 390px) {
   .child-brand small {

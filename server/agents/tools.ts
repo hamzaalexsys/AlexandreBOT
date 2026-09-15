@@ -1,7 +1,8 @@
 import { repositoryFor, type SchoolRead } from "../school/repository";
 import type { Session } from "../auth/session";
 import type { Language } from "@/lib/contracts";
-import { createSimulation } from "./simulations";
+import { createConceptLab, createSimulation } from "./simulations";
+import { solveLinearEquation } from "./learning-tools";
 const descriptions: Record<string, string> = {
   read_child_overview:
     "Read the authorised child's school profile and the observation period.",
@@ -86,6 +87,68 @@ export function availableTools(session: Session) {
           },
         },
       },
+      {
+        type: "function",
+        function: {
+          name: "create_interactive_concept_lab",
+          description:
+            "Create one implemented, manipulable concept lab when the child asks to experiment with RGB light colours, regular polygon geometry, or addition/subtraction on a number line. The UI provides live sliders and immediate feedback. Return the exact resulting scene with boardAction new.",
+          parameters: {
+            type: "object",
+            properties: {
+              type: {
+                type: "string",
+                enum: ["color", "geometry", "numberline"],
+                description:
+                  "color mixes RGB light, geometry constructs a regular polygon, numberline animates signed jumps.",
+              },
+              red: { type: "integer", minimum: 0, maximum: 255 },
+              green: { type: "integer", minimum: 0, maximum: 255 },
+              blue: { type: "integer", minimum: 0, maximum: 255 },
+              sides: { type: "integer", minimum: 3, maximum: 8 },
+              rotation: { type: "number", minimum: 0, maximum: 360 },
+              start: { type: "integer", minimum: -5, maximum: 5 },
+              jump: { type: "integer", minimum: -5, maximum: 5 },
+              title: { type: "string", maxLength: 100 },
+            },
+            required: ["type"],
+            additionalProperties: false,
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "solve_linear_equation",
+          description:
+            "Solve one first-degree equation a*x+b=c exactly and create a checked step-by-step balance-board scene. Extract a, b and c from the child's text or attached drawing. Use only for a concrete linear equation, never for a general lesson.",
+          parameters: {
+            type: "object",
+            properties: {
+              a: {
+                type: "number",
+                minimum: -20,
+                maximum: 20,
+                description: "Non-zero coefficient of x.",
+              },
+              b: {
+                type: "number",
+                minimum: -100,
+                maximum: 100,
+                description: "Constant on the left side.",
+              },
+              c: {
+                type: "number",
+                minimum: -100,
+                maximum: 100,
+                description: "Constant on the right side.",
+              },
+            },
+            required: ["a", "b", "c"],
+            additionalProperties: false,
+          },
+        },
+      },
     ];
   return parentTools.map((name) => ({
     type: "function",
@@ -111,6 +174,10 @@ export async function executeTool(
   const parsed = JSON.parse(args || "{}");
   if (name === "create_interactive_simulation")
     return createSimulation(parsed, lang);
+  if (name === "create_interactive_concept_lab")
+    return createConceptLab(parsed, lang);
+  if (name === "solve_linear_equation")
+    return solveLinearEquation(parsed, lang);
   if (!parsed || Array.isArray(parsed) || Object.keys(parsed).length)
     throw new Error("TOOL_ARGUMENTS_REJECTED");
   if (name === "get_teaching_guidance")

@@ -64,6 +64,9 @@ export function StudentWorkspace({
   const page = book.pages[book.index];
   const quiz = page.quiz || null;
   const quizKey = `${page.createdAt}-${quiz?.question}`;
+  const magicLab = ["color", "geometry", "numberline"].includes(
+    page.scene.simulation?.type || "",
+  );
   const answer = answered?.key === quizKey ? answered.value : null;
   const setAnswer = (value: number) => setAnswered({ key: quizKey, value });
   useEffect(() => {
@@ -137,6 +140,9 @@ export function StudentWorkspace({
       water: t("Le voyage de l’eau", "رحلة الماء"),
       fractions: t("Une pizza à partager", "بيتزا للمشاركة"),
       pendulum: t("La balançoire curieuse", "الأرجوحة الفضولية"),
+      color: t("Le laboratoire des couleurs", "مختبر الألوان"),
+      geometry: t("La fabrique des formes", "مصنع الأشكال"),
+      numberline: t("Les bonds sur la droite", "قفزات على خط الأعداد"),
     };
     const scene: Scene = {
       id: `${type}-${crypto.randomUUID().slice(0, 8)}`,
@@ -156,6 +162,21 @@ export function StudentWorkspace({
       }),
     );
     setAnswered(null);
+    if (type === "color")
+      setSuggestions([
+        t("Comment fabrique-t-on du blanc ?", "كيف نصنع اللون الأبيض؟"),
+        t("Pourquoi parle-t-on de lumière RGB ?", "لماذا نسميه ضوء RGB؟"),
+      ]);
+    if (type === "geometry")
+      setSuggestions([
+        t("Quelle forme a 6 côtés ?", "ما الشكل الذي له 6 أضلاع؟"),
+        t("Explique-moi les sommets", "اشرح لي الرؤوس"),
+      ]);
+    if (type === "numberline")
+      setSuggestions([
+        t("Montre-moi une soustraction", "أرني عملية طرح"),
+        t("Pourquoi recule-t-on avec un nombre négatif ?", "لماذا نتراجع مع العدد السالب؟"),
+      ]);
     setView("activity");
   }
   // Page-local tools use the same notebook state. Unsupported browsers simply skip registration.
@@ -251,8 +272,10 @@ export function StudentWorkspace({
       <main className="child-main">
         <section className="milo-welcome">
           <div className="welcome-fox">
-            <FoxAvatar speaking={chat.busy} happy={correct} />
-            <span className="fox-sticker">{t("Coucou !", "أهلاً!")}</span>
+            <FoxAvatar speaking={chat.busy} happy={correct || magicLab} />
+            <span className="fox-sticker">
+              {magicLab ? t("Waouh !", "رائع!") : t("Coucou !", "أهلاً!")}
+            </span>
           </div>
           <div className="milo-welcome-copy">
             <span className="little-label">
@@ -294,8 +317,66 @@ export function StudentWorkspace({
             </svg>
           </div>
         </section>
+        <section className="magic-labs" aria-labelledby="magic-labs-title">
+          <div className="magic-labs-copy">
+            <span className="magic-eyebrow">
+              <Sparkles size={15} /> {t("NOUVEAU", "جديد")}
+            </span>
+            <h2 id="magic-labs-title">
+              {t("Les labos magiques de Milo", "مختبرات ميلو السحرية")}
+            </h2>
+            <p>
+              {t(
+                "Change un réglage. Regarde ce qui se passe. Explique ce que tu découvres !",
+                "غيّر إعداداً. شاهد ما يحدث. اشرح ما اكتشفته!",
+              )}
+            </p>
+          </div>
+          <div className="magic-lab-cards">
+            <button
+              className="color-lab-card"
+              disabled={chat.busy}
+              onClick={() => explore("color")}
+            >
+              <span className="lab-card-art color-orbs" aria-hidden="true">
+                <i /><i /><i />
+              </span>
+              <span>
+                <strong>{t("Mélange les lumières", "امزج الأضواء")}</strong>
+                <small>{t("Crée ta couleur", "اصنع لونك")}</small>
+              </span>
+              <ArrowRight size={17} />
+            </button>
+            <button
+              className="geometry-lab-card"
+              disabled={chat.busy}
+              onClick={() => explore("geometry")}
+            >
+              <span className="lab-card-art shape-gem" aria-hidden="true">⬡</span>
+              <span>
+                <strong>{t("Fabrique une forme", "اصنع شكلاً")}</strong>
+                <small>{t("3 à 8 côtés", "من 3 إلى 8 أضلاع")}</small>
+              </span>
+              <ArrowRight size={17} />
+            </button>
+            <button
+              className="numbers-lab-card"
+              disabled={chat.busy}
+              onClick={() => explore("numberline")}
+            >
+              <span className="lab-card-art number-hop" aria-hidden="true">
+                <i>−2</i><b>↗</b><i>3</i>
+              </span>
+              <span>
+                <strong>{t("Fais bondir Milo", "اجعل ميلو يقفز")}</strong>
+                <small>{t("Additionne en jouant", "اجمع باللعب")}</small>
+              </span>
+              <ArrowRight size={17} />
+            </button>
+          </div>
+        </section>
         <div className="explore-strip">
-          <span>{t("Une idée pour commencer ?", "فكرة لنبدأ؟")}</span>
+          <span>{t("Encore plus à explorer", "المزيد للاستكشاف")}</span>
           <div>
             {(
               [

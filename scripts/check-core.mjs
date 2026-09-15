@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 await mkdir(".sites-runtime", { recursive: true });
 await build({
   stdin: {
-    contents: `import assert from 'node:assert/strict';import {bounceAt,pendulumAngle} from './lib/physics';import {applyBoardReply,drawingIntent,normalizeBoardAction,requestedSimulationType,requestsBoardVisual} from './lib/notebook';import {parentFocusFor} from './lib/parent-focus';import {replySchema,sceneSchema} from './lib/contracts';
+    contents: `import assert from 'node:assert/strict';import {bounceAt,pendulumAngle} from './lib/physics';import {applyBoardReply,drawingIntent,normalizeBoardAction,requestedConceptLabType,requestedSimulationType,requestsBoardVisual,requestsEquationSolver} from './lib/notebook';import {parentFocusFor} from './lib/parent-focus';import {replySchema,sceneSchema} from './lib/contracts';
 const g=9.81,h=3,e=.75,drop=Math.sqrt(2*h/g);
 assert.equal(bounceAt(0,{height:h}).height,h);assert.ok(Math.abs(bounceAt(drop,{height:h}).height)<1e-9);
 const peak=drop+Math.sqrt(2*g*h)*e/g;assert.ok(Math.abs(bounceAt(peak,{height:h,elasticity:e}).height-h*e*e)<1e-7);
@@ -19,6 +19,8 @@ const blank={id:'blank-entry',title:'Ready',subtitle:'',shapes:[],simulation:nul
 assert.equal(requestsBoardVisual('montre moi dans le tableau'),true);assert.equal(requestsBoardVisual('Dessine une fleur'),true);assert.equal(requestsBoardVisual('أرني ثلاثة أمثلة على اللوحة.'),true);assert.equal(requestsBoardVisual('Garde le tableau et explique-moi simplement'),false);
 assert.equal(drawingIntent('jai dessiner quoi ?'),'inspect');assert.equal(drawingIntent('Qu’est-ce que j’ai dessiné ?'),'inspect');assert.equal(drawingIntent('Résous maintenant'),'solve');assert.equal(drawingIntent('explique-moi cette équation'),'solve');assert.equal(drawingIntent('raconte-moi une histoire'),'none');assert.equal(requestsBoardVisual('jai dessiner quoi ?'),false);
 assert.equal(requestedSimulationType('Montre la trajectoire d’un ballon qui rebondit'),'bounce');assert.equal(requestedSimulationType('Fais une expérience avec le cycle de l’eau'),'water');assert.equal(requestedSimulationType('Dessine une fleur'),null);assert.equal(requestedSimulationType('Explique ce qui est déjà au tableau'),null);
+assert.equal(requestedConceptLabType('Crée un laboratoire interactif pour mélanger les couleurs'),'color');assert.equal(requestedConceptLabType('Construis un polygone dans un labo de géométrie'),'geometry');assert.equal(requestedConceptLabType('Montre une addition sur une droite numérique interactive'),'numberline');assert.equal(requestedConceptLabType('اريد مختبر لمزج الألوان'),'color');assert.equal(requestedConceptLabType('Dessine simplement une fleur'),null);
+assert.equal(requestsEquationSolver('Résous 2x + 4 = 10'),true);assert.equal(requestsEquationSolver('Explique les équations du premier degré'),false);assert.equal(requestsEquationSolver('حل المعادلة 3x + 2 = 11'),true);
 assert.equal(parentFocusFor('Compare ses résultats en français'),'results');assert.equal(parentFocusFor('A-t-il une absence justifiée ?'),'attendance');assert.equal(parentFocusFor('Présente son parcours scolaire'),'journey');assert.equal(parentFocusFor('Comment puis-je l’aider à la maison ?'),'support');assert.equal(parentFocusFor('Y a-t-il des messages ou devoirs ?'),'records');assert.equal(parentFocusFor('Comment va mon enfant ?'),'summary');
 const updated=applyBoardReply(book,{scene:{...scene,shapes:[{...shape,x:200}]},boardAction:'update',removeShapeIds:[]});assert.equal(updated.pages[0].scene.shapes[0].x,200);assert.equal(updated.pages[0].strokes.length,1);assert.equal(book.pages[0].scene.shapes[0].x,100);
 const newBook=applyBoardReply(updated,{scene:{...scene,id:'b'},boardAction:'new',removeShapeIds:[]});assert.equal(newBook.pages.length,2);assert.equal(newBook.pages[0].strokes.length,1);assert.equal(newBook.index,1);
@@ -38,6 +40,11 @@ await assert.rejects(()=>executeTool('read_learning','{"parentId":999}',parent,'
 await assert.rejects(()=>executeTool('execute_sql','{}',parent,'fr'));
 await assert.rejects(()=>executeTool('create_interactive_simulation','{"type":"bounce","height":300}',student,'fr'));
 const experiment=await executeTool('create_interactive_simulation','{"type":"bounce","height":3,"gravity":1.62}',student,'ar');assert.equal(experiment.simulation.gravity,1.62);
+const colors=await executeTool('create_interactive_concept_lab','{"type":"color","red":12,"green":34,"blue":56}',student,'fr');assert.equal(colors.simulation.type,'color');assert.equal(colors.simulation.green,34);
+const geometry=await executeTool('create_interactive_concept_lab','{"type":"geometry","sides":7}',student,'ar');assert.equal(geometry.simulation.sides,7);
+const numberline=await executeTool('create_interactive_concept_lab','{"type":"numberline","start":-3,"jump":5}',student,'fr');assert.equal(numberline.simulation.start,-3);assert.equal(numberline.simulation.jump,5);
+const solved=await executeTool('solve_linear_equation','{"a":2,"b":4,"c":10}',student,'fr');assert.equal(solved.solution,3);assert.equal(solved.scene.shapes.length,8);assert.match(solved.scene.shapes.at(-1).text,/x = 3/);
+await assert.rejects(()=>executeTool('solve_linear_equation','{"a":0,"b":4,"c":10}',student,'fr'));await assert.rejects(()=>executeTool('create_interactive_concept_lab','{"type":"color","red":300}',student,'fr'));
 console.log('PASS physics, gravity comparison, pendulum, notebook continuity and SVG validation');`,
     resolveDir: process.cwd(),
     loader: "ts",

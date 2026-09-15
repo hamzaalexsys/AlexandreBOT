@@ -22,6 +22,11 @@ Aucun `INSERT`, `UPDATE`, `DELETE`, `MERGE`, DDL, changement d’utilisateur ou 
 | --- | --- |
 | Bonjour | Réponse OpenRouter, `keep`, aucun outil |
 | Ballon et trajectoire | Nouvelle simulation interactive |
+| Labo RGB | Appel ciblé de `create_interactive_concept_lab`, trois curseurs et couleur recalculée |
+| Fabrique des formes | Polygone passé de 5 à 8 côtés, huit sommets tactiles |
+| Droite numérique | Saut positif puis négatif, égalité et position recalculées |
+| Équation `2x + 4 = 10` | Appel de `solve_linear_equation`, huit formes et solution vérifiée `x = 3` |
+| Question ordinaire | Réponse OpenRouter sans appel d’outil |
 | Hauteur à 5 m | Mise à jour de la même scène |
 | Plante et soleil | Dessin libre animé de dix objets |
 | Question arabe | Réponse arabe, tableau conservé |

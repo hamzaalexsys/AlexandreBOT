@@ -149,6 +149,18 @@ export function Sticker({ kind }: { kind: Shape["sticker"] }) {
         <circle cx="-22" cy="8" r="6" fill="#a69ee8" />
       </g>
     );
+  if (kind === "fox")
+    return (
+      <g>
+        <path d="M-38-10L-42-50L-11-31M11-31L42-50L38-10" fill="#ee7840" stroke="#c95734" strokeWidth="3" strokeLinejoin="round" />
+        <ellipse rx="44" ry="37" fill="#f28a4e" stroke="#c95734" strokeWidth="3" />
+        <path d="M-37-44L-18-30L-34-22ZM37-44L18-30L34-22Z" fill="#ffd4b4" />
+        <path d="M-27 2Q-18 31 0 33Q18 31 27 2Q13 13 0 5Q-13 13-27 2Z" fill="#fff4e8" />
+        <path d="M-23-5Q-15-12-8-5M8-5Q15-12 23-5" fill="none" stroke="#493d49" strokeWidth="4" strokeLinecap="round" />
+        <path d="M-6 11L0 17L6 11Z" fill="#493d49" />
+        <path d="M-6 23Q0 28 6 23" fill="none" stroke="#a64c3c" strokeWidth="2.5" strokeLinecap="round" />
+      </g>
+    );
   return (
     <g>
       <path d="M-32-12L-37-43L-9-28M12-28L39-43L32-10" fill="#f1b176" />

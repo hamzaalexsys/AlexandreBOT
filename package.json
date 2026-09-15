@@ -16,6 +16,7 @@
     "check:parent": "node scripts/check-parent-live.mjs",
     "check:vision": "node scripts/check-vision.mjs",
     "check:drawing": "node scripts/check-child-drawing.mjs",
+    "check:labs": "node scripts/check-milo-labs.mjs",
     "build": "vinext build",
     "start": "node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1 --inspector-port 0",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",

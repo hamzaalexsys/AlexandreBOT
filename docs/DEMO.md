@@ -2,14 +2,18 @@
 
 ## Milo — parcours conseillé
 
-1. « Milo, montre-moi avec une expérience interactive pourquoi un ballon rebondit et dessine sa trajectoire. »
-2. Modifier la hauteur et choisir la Lune, puis demander : « Garde ce tableau et explique pourquoi le ballon retombe. »
-3. « Dessine une plante qui pousse vers un soleil animé. Je veux toucher la plante pour découvrir ce dont elle a besoin. »
-4. Revenir à une ancienne page pour montrer que le carnet n’a rien effacé.
+1. Cliquer **Mélange les lumières**, déplacer les trois curseurs et demander : « Comment puis-je fabriquer du blanc ? »
+2. Revenir en haut puis cliquer **Fais bondir Milo**. Mettre un saut négatif et lancer l’animation.
+3. Dans le chat : « Construis un hexagone dans un laboratoire de géométrie interactif où je peux changer ses côtés. »
+4. « Milo, montre-moi avec une expérience interactive pourquoi un ballon rebondit et dessine sa trajectoire. » Modifier la hauteur et choisir la Lune.
 5. Ouvrir une page vide, écrire `x + 1 = 0` au doigt, puis dire : « Résous maintenant l’équation que j’ai dessinée. »
-6. Ajouter un trait sur une explication de Milo, puis demander : « J’ai dessiné quoi ? »
-7. « Montre-moi trois phrases et aide-moi à trouver le sujet, le verbe et le COD. »
-8. Passer en arabe : « اشرح لي دورة الماء على اللوحة برسوم متحركة بسيطة. »
+6. Ajouter un trait sur une explication de Milo, puis demander : « J’ai dessiné quoi ? » La page doit rester intacte.
+7. Revenir à une ancienne page pour montrer que le carnet n’a rien effacé.
+8. « Dessine une plante qui pousse vers un soleil animé. Je veux toucher la plante pour découvrir ce dont elle a besoin. »
+9. « Montre-moi trois phrases et aide-moi à trouver le sujet, le verbe et le COD. »
+10. Passer en arabe : « أنشئ مختبرا تفاعليا لمزج الألوان والضوء »
+
+Pour une démonstration Milo de deux minutes, utiliser les étapes 1, 3, 5 et 7. Elles montrent successivement la manipulation immédiate, un appel d’outil IA, la compréhension du dessin de l’enfant et la mémoire du carnet.
 
 ## Alexandre — questions fondées sur AAMAR
 

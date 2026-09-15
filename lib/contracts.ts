@@ -36,6 +36,7 @@ export const shapeSchema = z.object({
       "water",
       "moon",
       "cat",
+      "fox",
     ])
     .optional(),
   animation: animationSchema.optional(),
@@ -43,7 +44,16 @@ export const shapeSchema = z.object({
   reveal: z.string().max(220).optional(),
 });
 export const simulationSchema = z.object({
-  type: z.enum(["bounce", "orbit", "pendulum", "water", "fractions"]),
+  type: z.enum([
+    "bounce",
+    "orbit",
+    "pendulum",
+    "water",
+    "fractions",
+    "color",
+    "geometry",
+    "numberline",
+  ]),
   height: z.number().min(1).max(5).optional(),
   gravity: z.number().min(1.6).max(20).optional(),
   elasticity: z.number().min(0.2).max(0.95).optional(),
@@ -51,6 +61,13 @@ export const simulationSchema = z.object({
   parts: z.number().int().min(2).max(12).optional(),
   selected: z.number().int().min(0).max(12).optional(),
   length: z.number().min(0.5).max(2.5).optional(),
+  red: z.number().int().min(0).max(255).optional(),
+  green: z.number().int().min(0).max(255).optional(),
+  blue: z.number().int().min(0).max(255).optional(),
+  sides: z.number().int().min(3).max(8).optional(),
+  rotation: z.number().min(0).max(360).optional(),
+  start: z.number().int().min(-5).max(5).optional(),
+  jump: z.number().int().min(-5).max(5).optional(),
 });
 export const sceneSchema = z.object({
   id: z.string().min(1).max(60),

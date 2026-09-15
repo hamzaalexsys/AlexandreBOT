@@ -27,11 +27,12 @@ La configuration web attend `SESSION_SECRET`, `OPENROUTER_API_KEY`, `OPENROUTER_
 ## Parcours à présenter
 
 1. Choisir **Je suis élève**. Une nouvelle page vide s’ouvre ; les anciennes pages restent dans le carnet.
-2. Demander à Milo : « Montre-moi pourquoi un ballon rebondit et sa trajectoire. » Modifier ensuite la hauteur, Terre/Lune, puis revenir à une ancienne page.
-3. Demander un dessin libre animé, toucher une figure et dessiner au doigt. Dès qu’un trait existe, la question suivante transmet automatiquement une capture du tableau à Milo ; **Expliquer mon dessin** permet aussi de l’interroger directement. Une photo d’exercice peut être expliquée par le modèle vision.
-4. Passer en arabe : l’interface devient RTL et les nouvelles réponses sont en arabe.
-5. Changer d’espace et choisir **Je suis parent**. Le clic reste dans l’espace Alexandre.
-6. Consulter la fiche réelle d’Aamar en lecture seule, puis demander une comparaison 2023/2024–2024/2025, son parcours, son absence actuelle ou des pistes pour préparer un échange avec l’enseignant. La fiche de gauche suit le sujet de la conversation.
+2. Ouvrir un des **Labos magiques de Milo** : mélanger les lumières RGB, construire un polygone ou faire bondir Milo sur une droite numérique. Les curseurs et animations réagissent immédiatement.
+3. Demander à Milo : « Montre-moi pourquoi un ballon rebondit et sa trajectoire. » Modifier ensuite la hauteur, Terre/Lune, puis revenir à une ancienne page.
+4. Demander un dessin libre animé, toucher une figure et dessiner au doigt. Dès qu’un trait existe, la question suivante transmet automatiquement une capture du tableau à Milo ; **Expliquer mon dessin** permet aussi de l’interroger directement. Une équation concrète est transmise au solveur vérifié. Une photo d’exercice peut être expliquée par le modèle vision.
+5. Passer en arabe : l’interface devient RTL et les nouvelles réponses sont en arabe.
+6. Changer d’espace et choisir **Je suis parent**. Le clic reste dans l’espace Alexandre.
+7. Consulter la fiche réelle d’Aamar en lecture seule, puis demander une comparaison 2023/2024–2024/2025, son parcours, son absence actuelle ou des pistes pour préparer un échange avec l’enseignant. La fiche de gauche suit le sujet de la conversation.
 
 Le login est volontairement faux pour la présentation locale. La session parent contient un périmètre pilote signé côté serveur ; elle ne prend aucun identifiant dans le chat ou l’URL.
 
@@ -54,9 +55,10 @@ npm.cmd run check:board
 npm.cmd run check:parent
 npm.cmd run check:vision
 npm.cmd run check:drawing
+npm.cmd run check:labs
 ```
 
-Les cinq derniers contrôles utilisent de vrais appels OpenRouter et, pour Alexandre, de vraies lectures SQL. `check:parent` pose 15 questions de présentation et compare les réponses aux faits Azure attendus. `check:drawing` vérifie qu’une équation manuscrite est lue, résolue sur la page courante et ensuite décrite sans mutation.
+Les six derniers contrôles utilisent de vrais appels OpenRouter et, pour Alexandre, de vraies lectures SQL. `check:parent` pose 15 questions de présentation et compare les réponses aux faits Azure attendus. `check:drawing` vérifie qu’une équation manuscrite est lue, résolue sur la page courante et ensuite décrite sans mutation. `check:labs` force les trois nouveaux parcours d’outil, une équation vérifiée, une demande arabe et une conversation ordinaire qui ne doit appeler aucun outil.
 
 ## Documentation
 

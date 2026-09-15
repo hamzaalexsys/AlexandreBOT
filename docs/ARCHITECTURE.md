@@ -26,7 +26,7 @@ flowchart TD
   Chat --> API[API chat — authentification et validation]
   API --> Agent[Orchestrateur borné]
   Agent --> Router[OpenRouter — DeepSeek V4.1 Flash]
-  Agent --> StudentTools[Outil de simulation Milo]
+  Agent --> StudentTools[Outils ciblés de Milo]
   Agent --> ParentTools[Outils de lecture Alexandre]
   ParentTools --> Repo[SchoolRepository borné]
   Repo --> Client[Client de passerelle serveur]
@@ -75,9 +75,17 @@ Les animations déclaratives proposées sont flottement, pulsation, rotation, ba
 
 ### Outils de Milo
 
-`create_interactive_simulation` valide les paramètres et prépare une scène. L’appel est facultatif : un bonjour ou une question sur une figure ne force pas une nouvelle expérience. Le même contrat de simulation peut également être renvoyé directement dans une scène structurée.
+Milo possède trois outils serveur aux responsabilités séparées :
 
-Le catalogue reste volontairement petit. La vision du tableau est un contexte multimodal, et le dessin SVG libre est une sortie structurée : les transformer en outils séparés ajouterait des choix qui se recouvrent. L’unique outil enfant regroupe les cinq expériences qui partagent le même contrat et le même moteur d’interaction ; il n’est exposé au modèle que lorsqu’une intention de simulation est détectée. Cette décision suit les recommandations de [l’OpenAI Practical Guide to Building Agents](https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/) et de [Writing effective tools for AI agents d’Anthropic](https://www.anthropic.com/engineering/writing-tools-for-agents) : outils distincts et bien définis, peu de chevauchement, activation liée au besoin et évaluations fondées sur les parcours réels. Un nouvel outil sera ajouté seulement s’il apporte un calcul déterministe ou un effet différent, avec son propre contrat et ses tests.
+- `create_interactive_simulation` valide les phénomènes animés existants : ballon, orbite, pendule, eau et fractions ;
+- `create_interactive_concept_lab` ouvre un laboratoire manipulable pour les couleurs RGB, les polygones réguliers ou la droite numérique ;
+- `solve_linear_equation` calcule exactement une équation `a×x+b=c`, refuse `a=0`, puis produit les étapes et la scène de balance à afficher.
+
+Un routeur déterministe détecte d’abord le besoin. Il n’expose au modèle qu’un seul outil correspondant, avec un appel forcé lors de la première création. Le résultat validé de l’outil devient ensuite la scène autoritaire côté serveur : le modèle rédige l’explication, mais il ne peut remplacer ni le calcul ni les paramètres. Une interaction sur un laboratoire déjà ouvert ne rappelle pas l’outil et met à jour la page courante.
+
+Le catalogue reste volontairement petit. La vision du tableau est un contexte multimodal, et le dessin SVG libre est une sortie structurée : les transformer en outils séparés ajouterait des choix qui se recouvrent. Cette décision suit les recommandations de [l’OpenAI Practical Guide to Building Agents](https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/) et de [Writing effective tools for AI agents d’Anthropic](https://www.anthropic.com/engineering/writing-tools-for-agents) : outils distincts et bien définis, peu de chevauchement, activation liée au besoin et évaluations fondées sur les parcours réels.
+
+L’expérience suit aussi les [principes UDL du CAST](https://udlguidelines.cast.org/action-expression/) en laissant l’enfant agir, dessiner, parler, lire et manipuler, et l’approche des [simulations PhET](https://phet.colorado.edu/translation/1534/about) avec plusieurs représentations et un retour immédiat lorsqu’un réglage change.
 
 | Expérience | Interactions | Modèle et limites |
 | --- | --- | --- |
@@ -86,6 +94,9 @@ Le catalogue reste volontairement petit. La vision du tableau est un contexte mu
 | Orbite | Lecture/pause et vitesse | Schéma circulaire illustratif, distances et vitesses non à l’échelle. |
 | Eau | Lecture/pause, vitesse et sélection | Cycle illustré : évaporation, condensation, précipitation, retour. |
 | Fractions | Parts 2–12 et sélection des parts | Le nombre sélectionné est recalculé dans le renderer. |
+| Couleurs | Curseurs rouge, vert et bleu 0–255, résultat et code hexadécimal instantanés | Mélange additif de lumière RGB, distinct du mélange de peinture. |
+| Géométrie | 3–8 côtés, rotation, lecture/pause, sommets tactiles | Polygone régulier calculé dans le renderer ; côtés et sommets sont recomp­tés en direct. |
+| Droite numérique | Départ −5 à 5, saut −5 à 5, lecture/pause, nombres tactiles | La position, l’arc et l’égalité sont recalculés ; les nombres négatifs sont visibles. |
 
 Les animations décoratives respectent la préférence de mouvement réduit. Les simulations démarrent en pause et possèdent un bouton d’arrêt. Les dessins générés conservent un espace logique 800 × 500, redimensionné sans déformation.
 

@@ -1,7 +1,12 @@
 import { env } from "cloudflare:workers";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { replySchema, sceneSchema, type Reply } from "@/lib/contracts";
+import {
+  replySchema,
+  sceneSchema,
+  type Reply,
+  type Scene,
+} from "@/lib/contracts";
 import type { Session } from "../auth/session";
 import { shared, studentPrompt, parentPrompt } from "./prompts";
 import { parseModelJson } from "./parse-response";
@@ -16,7 +21,9 @@ import {
 import {
   drawingIntent,
   normalizeBoardAction,
+  requestedConceptLabType,
   requestedSimulationType,
+  requestsEquationSolver,
   requestsBoardVisual,
 } from "@/lib/notebook";
 export const inputSchema = z
@@ -128,10 +135,28 @@ export async function runAgent(
   if (!config.OPENROUTER_API_KEY) throw new Error("AI_NOT_CONFIGURED");
   const requestedSimulation =
     session.role === "student" ? requestedSimulationType(input.message) : null;
+  const requestedConceptLab =
+    session.role === "student" ? requestedConceptLabType(input.message) : null;
   const currentDrawingIntent =
     session.role === "student" && input.childDrawing
       ? drawingIntent(input.message)
       : "none";
+  const requestedEquation =
+    session.role === "student" &&
+    (requestsEquationSolver(input.message) || currentDrawingIntent === "solve");
+  const requiresConceptLabTool =
+    Boolean(requestedConceptLab) &&
+    input.scene?.simulation?.type !== requestedConceptLab;
+  const requiresSimulationTool =
+    Boolean(requestedSimulation) &&
+    input.scene?.simulation?.type !== requestedSimulation;
+  const selectedStudentTool = requestedEquation
+    ? "solve_linear_equation"
+    : requiresConceptLabTool
+      ? "create_interactive_concept_lab"
+      : requiresSimulationTool
+        ? "create_interactive_simulation"
+        : null;
   const parentContract =
     "Return JSON {message:string,suggestions:string[]}. No more than 3 suggestions. The server adds the parent UI fields.";
   const messages: ApiMessage[] = [
@@ -164,6 +189,10 @@ export async function runAgent(
       : context,
   });
   const toolNames: string[] = [];
+  let generatedStudentScene: Scene | undefined;
+  let solvedEquation:
+    | { equation: string; solution: number; steps: string[] }
+    | undefined;
   let parentFacts: { tool: string; data: unknown }[] = [];
   if (session.role === "parent") {
     const names = availableTools(session).map((t) => t.function.name);
@@ -181,11 +210,18 @@ export async function runAgent(
   }
   const deadline = Date.now() + 100000;
   let repairAttempts = 0;
+  let studentToolAttempted = false;
   for (let turn = 0; turn < 4; turn++) {
+    const selectedTools =
+      session.role === "student" && selectedStudentTool
+        ? availableTools(session).filter(
+            (tool) => tool.function.name === selectedStudentTool,
+          )
+        : [];
     const enableStudentTools =
       session.role === "student" &&
-      Boolean(requestedSimulation) &&
-      toolNames.length === 0 &&
+      selectedTools.length === 1 &&
+      !studentToolAttempted &&
       repairAttempts === 0 &&
       turn < 3;
     const data = await requestCompletion(
@@ -193,10 +229,14 @@ export async function runAgent(
       {
           model: config.OPENROUTER_MODEL || "deepseek/deepseek-v4.1-flash",
           messages,
-          tools:
-            enableStudentTools ? availableTools(session) : undefined,
+          tools: enableStudentTools ? selectedTools : undefined,
           tool_choice:
-            enableStudentTools ? "auto" : "none",
+            enableStudentTools
+              ? {
+                  type: "function",
+                  function: { name: selectedStudentTool },
+                }
+              : "none",
           response_format:
             session.role === "parent"
               ? {
@@ -228,6 +268,7 @@ export async function runAgent(
     if (!message) throw new Error("AI_EMPTY");
     if (message.tool_calls?.length) {
       if (message.tool_calls.length > 4) throw new Error("TOOL_LIMIT");
+      studentToolAttempted = session.role === "student";
       messages.push(message);
       for (const call of message.tool_calls) {
         let result: unknown;
@@ -239,6 +280,21 @@ export async function runAgent(
             input.lang,
           );
           toolNames.push(call.function.name);
+          if (
+            call.function.name === "create_interactive_simulation" ||
+            call.function.name === "create_interactive_concept_lab"
+          )
+            generatedStudentScene = result as Scene;
+          if (call.function.name === "solve_linear_equation") {
+            const checked = result as {
+              equation: string;
+              solution: number;
+              steps: string[];
+              scene: Scene;
+            };
+            generatedStudentScene = checked.scene;
+            solvedEquation = checked;
+          }
         } catch {
           result = {
             error:
@@ -270,6 +326,21 @@ export async function runAgent(
         };
       } else {
         result = replySchema.parse(parsed);
+        if (generatedStudentScene) {
+          result.scene = generatedStudentScene;
+          result.boardAction =
+            requestedEquation && input.childDrawing ? "update" : "new";
+          result.removeShapeIds = [];
+        }
+        if (solvedEquation) {
+          const solution = Number.isInteger(solvedEquation.solution)
+            ? String(solvedEquation.solution)
+            : solvedEquation.solution.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+          result.message =
+            input.lang === "fr"
+              ? `J’ai vérifié ${solvedEquation.equation}. La solution est x = ${solution}. Regarde chaque étape sur le tableau, puis touche les explications pour comprendre pourquoi l’égalité reste équilibrée.`
+              : `تحققت من ${solvedEquation.equation}. الحل هو x = ${solution}. شاهد كل خطوة على اللوحة، ثم المس الشرح لتفهم كيف تبقى المساواة متوازنة.`;
+        }
       }
       if (result.scene) {
         const visibleShapes = result.scene.shapes.filter((shape) =>
@@ -335,10 +406,23 @@ export async function runAgent(
         )
           throw new Error("DRAWING_SOLUTION_REQUIRED");
         if (
-          requestedSimulation &&
+          requiresSimulationTool &&
           result.scene?.simulation?.type !== requestedSimulation
         )
           throw new Error(`SIMULATION_REQUIRED:${requestedSimulation}`);
+        if (
+          requiresConceptLabTool &&
+          (result.scene?.simulation?.type !== requestedConceptLab ||
+            !toolNames.includes("create_interactive_concept_lab"))
+        )
+          throw new Error(`CONCEPT_LAB_REQUIRED:${requestedConceptLab}`);
+        if (
+          requestedEquation &&
+          (!toolNames.includes("solve_linear_equation") ||
+            !result.scene ||
+            result.scene.shapes.length < 4)
+        )
+          throw new Error("EQUATION_TOOL_REQUIRED");
       }
       if (result.boardAction !== "keep" && !result.scene)
         throw new Error("MISSING_SCENE");
@@ -366,6 +450,12 @@ export async function runAgent(
               : error instanceof Error &&
                   error.message.startsWith("SIMULATION_REQUIRED:")
                 ? `The child explicitly requested a calculated interactive experiment. Return a scene whose simulation.type is ${error.message.split(":")[1]}, with play/pause and controls supplied by the UI. Use boardAction new for a first experiment or update for the current matching experiment.`
+              : error instanceof Error &&
+                  error.message.startsWith("CONCEPT_LAB_REQUIRED:")
+                ? `Return the complete scene produced by create_interactive_concept_lab with simulation.type ${error.message.split(":")[1]} and boardAction new. Preserve every validated simulation setting from the tool result.`
+              : error instanceof Error &&
+                  error.message === "EQUATION_TOOL_REQUIRED"
+                ? "Use the exact checked scene and solution returned by solve_linear_equation. For a drawing, add that scene to the current page with boardAction update; otherwise use boardAction new. Do not recalculate or replace the result."
               : error instanceof ParentGroundingError
                 ? `The parent answer is not sufficiently grounded. Correct every issue: ${error.issues.join("; ")}. Use the canonical grounding anchors exactly. Do not add any year/class pair that is not in those anchors.`
               : "Invalid JSON structure";
@@ -387,8 +477,10 @@ export async function runAgent(
                 "CHILD_DRAWING_IGNORED",
                 "DRAWING_INSPECTION_MUST_KEEP",
                 "DRAWING_SOLUTION_REQUIRED",
+                "EQUATION_TOOL_REQUIRED",
               ].includes(error.message) ||
-                error.message.startsWith("SIMULATION_REQUIRED:"))
+                error.message.startsWith("SIMULATION_REQUIRED:") ||
+                error.message.startsWith("CONCEPT_LAB_REQUIRED:"))
             ? error.message
             : "INVALID_JSON",
       );

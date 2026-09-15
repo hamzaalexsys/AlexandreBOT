@@ -244,7 +244,7 @@ export function ExperimentDrawing({
             ),
           )}
         >
-          <Sticker kind="cat" />
+          <Sticker kind="fox" />
         </g>
         <text x="400" y="477" textAnchor="middle" fontSize="18" fill="#827795">
           {t(
@@ -311,6 +311,209 @@ export function ExperimentDrawing({
           {selected}/{n} —{" "}
           {t(`${selected} parts sur ${n}`, `${selected} أجزاء من ${n}`)}
         </text>
+      </g>
+    );
+  }
+  if (settings.type === "color") {
+    const red = settings.red ?? 255;
+    const green = settings.green ?? 95;
+    const blue = settings.blue ?? 145;
+    const mixed = `rgb(${red}, ${green}, ${blue})`;
+    const hex = `#${[red, green, blue]
+      .map((value) => value.toString(16).padStart(2, "0"))
+      .join("")}`.toUpperCase();
+    return (
+      <g>
+        <defs>
+          <radialGradient id="color-lab-bg">
+            <stop offset="0" stopColor="#443b76" />
+            <stop offset="1" stopColor="#1f1a3b" />
+          </radialGradient>
+          <filter id="color-glow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="12" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <rect width="800" height="500" fill="url(#color-lab-bg)" />
+        {Array.from({ length: 22 }, (_, i) => (
+          <circle
+            key={i}
+            cx={(i * 97 + 23) % 790}
+            cy={(i * 61 + 18) % 475}
+            r={i % 4 === 0 ? 2.5 : 1.3}
+            fill="#fff8d9"
+            opacity={0.35 + (i % 3) * 0.18}
+          />
+        ))}
+        <text x="400" y="50" textAnchor="middle" fontSize="20" fontWeight="800" fill="#fff">
+          {t("Trois lumières fabriquent une couleur", "ثلاثة أضواء تصنع لوناً")}
+        </text>
+        {[
+          { x: 235, value: red, color: `rgb(${red},0,0)`, label: "R", name: t("lumière rouge", "الضوء الأحمر") },
+          { x: 400, value: green, color: `rgb(0,${green},0)`, label: "V", name: t("lumière verte", "الضوء الأخضر") },
+          { x: 565, value: blue, color: `rgb(0,0,${blue})`, label: "B", name: t("lumière bleue", "الضوء الأزرق") },
+        ].map((lamp) => (
+          <g
+            key={lamp.label}
+            {...hit(t(`La ${lamp.name} vaut ${lamp.value} sur 255.`, `${lamp.name} شدته ${lamp.value} من 255.`))}
+          >
+            <path d={`M${lamp.x} 112L365 292H435Z`} fill={lamp.color} opacity=".23" />
+            <circle cx={lamp.x} cy="112" r="38" fill={lamp.color} filter="url(#color-glow)" />
+            <text x={lamp.x} y="119" textAnchor="middle" fontSize="22" fontWeight="900" fill="#fff">
+              {lamp.label}
+            </text>
+          </g>
+        ))}
+        <circle cx="400" cy="306" r="112" fill={mixed} opacity=".22" filter="url(#color-glow)" />
+        <circle
+          cx="400"
+          cy="306"
+          r="83"
+          fill={mixed}
+          stroke="#fff"
+          strokeWidth="5"
+          {...hit(t(`La couleur obtenue est ${hex}.`, `اللون الناتج هو ${hex}.`))}
+        />
+        <path d="M330 411Q400 441 470 411" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" opacity=".75" />
+        <text x="400" y="462" textAnchor="middle" fontSize="23" fontWeight="900" fill="#fff">
+          {hex}
+        </text>
+      </g>
+    );
+  }
+  if (settings.type === "geometry") {
+    const sides = settings.sides ?? 5;
+    const rotation = ((settings.rotation ?? 0) + time * 10) * (Math.PI / 180);
+    const points = Array.from({ length: sides }, (_, i) => {
+      const angle = rotation + (i * Math.PI * 2) / sides - Math.PI / 2;
+      return { x: 400 + Math.cos(angle) * 148, y: 240 + Math.sin(angle) * 148 };
+    });
+    const pointString = points.map((point) => `${point.x},${point.y}`).join(" ");
+    const names: Record<number, [string, string]> = {
+      3: ["triangle", "مثلث"],
+      4: ["quadrilatère", "شكل رباعي"],
+      5: ["pentagone", "خماسي الأضلاع"],
+      6: ["hexagone", "سداسي الأضلاع"],
+      7: ["heptagone", "سباعي الأضلاع"],
+      8: ["octogone", "ثماني الأضلاع"],
+    };
+    return (
+      <g>
+        <defs>
+          <linearGradient id="geometry-fill" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#ffd078" />
+            <stop offset=".48" stopColor="#ff8f82" />
+            <stop offset="1" stopColor="#a898ef" />
+          </linearGradient>
+          <filter id="geometry-shadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="10" stdDeviation="10" floodColor="#6d5c98" floodOpacity=".24" />
+          </filter>
+        </defs>
+        <rect width="800" height="500" fill="#fff9ee" />
+        <path d="M0 420Q180 370 360 426T800 410V500H0Z" fill="#e6f2df" />
+        <g opacity=".22">
+          {Array.from({ length: 9 }, (_, i) => (
+            <circle key={i} cx={60 + i * 92} cy={72 + (i % 2) * 25} r={10 + (i % 3) * 5} fill="#a898ef" />
+          ))}
+        </g>
+        <polygon points={pointString} fill="url(#geometry-fill)" stroke="#69558d" strokeWidth="7" strokeLinejoin="round" filter="url(#geometry-shadow)" {...hit(t(`C’est un ${names[sides][0]} régulier : tous ses côtés et ses angles sont égaux.`, `هذا ${names[sides][1]} منتظم: أضلاعه وزواياه متساوية.`))} />
+        {points.map((point, i) => (
+          <g key={i} {...hit(t(`Sommet ${i + 1} sur ${sides}`, `الرأس ${i + 1} من ${sides}`))}>
+            <circle cx={point.x} cy={point.y} r="15" fill="#fff" stroke="#69558d" strokeWidth="5" />
+            <text x={point.x} y={point.y + 5} textAnchor="middle" fontSize="13" fontWeight="900" fill="#69558d">
+              {i + 1}
+            </text>
+          </g>
+        ))}
+        <g transform="translate(670 375) scale(.52)">
+          <Sticker kind="fox" />
+        </g>
+        <text x="400" y="45" textAnchor="middle" fontSize="21" fontWeight="900" fill="#69558d">
+          {t(names[sides][0].toLocaleUpperCase("fr"), names[sides][1])}
+        </text>
+        <text x="400" y="458" textAnchor="middle" fontSize="19" fontWeight="800" fill="#675985">
+          {t(`${sides} côtés · ${sides} sommets`, `${sides} أضلاع · ${sides} رؤوس`)}
+        </text>
+      </g>
+    );
+  }
+  if (settings.type === "numberline") {
+    const start = settings.start ?? -2;
+    const jump = settings.jump ?? 5;
+    const target = start + jump;
+    const toX = (value: number) => 400 + value * 31;
+    const progress = (Math.sin(time * Math.PI - Math.PI / 2) + 1) / 2;
+    const x = toX(start + jump * progress);
+    const y = 287 - Math.sin(progress * Math.PI) * Math.min(115, 45 + Math.abs(jump) * 11);
+    const direction = jump >= 0 ? 1 : -1;
+    return (
+      <g>
+        <defs>
+          <linearGradient id="numberline-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#dff4ff" />
+            <stop offset="1" stopColor="#fff8dd" />
+          </linearGradient>
+        </defs>
+        <rect width="800" height="500" fill="url(#numberline-sky)" />
+        <path d="M0 372Q180 330 370 377T800 360V500H0Z" fill="#cbe8ba" />
+        <path d="M90 310H710" stroke="#665785" strokeWidth="6" strokeLinecap="round" />
+        <path d="M80 310l18-11v22Z" fill="#665785" />
+        <path d="M720 310l-18-11v22Z" fill="#665785" />
+        {Array.from({ length: 21 }, (_, i) => i - 10).map((value) => {
+          const canStartHere = value >= -5 && value <= 5;
+          const choose = () => onChange({ ...settings, start: value });
+          return (
+          <g
+            key={value}
+            {...(canStartHere
+              ? {
+                  role: "button",
+                  tabIndex: 0,
+                  "aria-label": t(
+                    `Nombre ${value}. Touche pour commencer ici.`,
+                    `العدد ${value}. المسه للبدء من هنا.`,
+                  ),
+                  onClick: choose,
+                  onKeyDown: (event: React.KeyboardEvent) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      choose();
+                    }
+                  },
+                }
+              : {})}
+          >
+            <path d={`M${toX(value)} 294V326`} stroke={value === start || value === target ? "#f06f51" : "#665785"} strokeWidth={value === start || value === target ? 5 : 3} />
+            <text x={toX(value)} y="351" textAnchor="middle" fontSize="15" fontWeight={value === start || value === target ? 900 : 700} fill={value === start || value === target ? "#d8523d" : "#665785"}>
+              {value}
+            </text>
+          </g>
+          );
+        })}
+        <path
+          d={`M${toX(start)} 278Q${(toX(start) + toX(target)) / 2} ${180 - Math.abs(jump) * 5} ${toX(target)} 278`}
+          fill="none"
+          stroke="#a18ee5"
+          strokeWidth="5"
+          strokeDasharray="9 8"
+        />
+        <g transform={`translate(${x} ${y}) scale(.48) rotate(${direction * 7})`} {...hit(t(`Milo saute de ${start} jusqu’à ${target}.`, `يقفز ميلو من ${start} إلى ${target}.`))}>
+          <Sticker kind="fox" />
+        </g>
+        <text x="400" y="64" textAnchor="middle" fontSize="31" fontWeight="900" fill="#5b4c7c">
+          {start} {jump >= 0 ? "+" : "−"} {Math.abs(jump)} = {target}
+        </text>
+        <text x="400" y="111" textAnchor="middle" fontSize="18" fontWeight="800" fill="#8a78ad">
+          {jump >= 0
+            ? t(`Avance de ${jump} bonds !`, `تقدّم ${jump} قفزات!`)
+            : t(`Recule de ${Math.abs(jump)} bonds !`, `تراجع ${Math.abs(jump)} قفزات!`)}
+        </text>
+        <g transform="translate(685 405) scale(.34)">
+          <Sticker kind="star" />
+        </g>
       </g>
     );
   }
@@ -439,7 +642,7 @@ export function ExperimentControls({
   return (
     <div className="experiment-controls">
       <div className="play-row">
-        {settings.type !== "fractions" ? (
+        {settings.type !== "fractions" && settings.type !== "color" ? (
           <>
             <button className="play-button" onClick={onToggle}>
               {running ? <Pause size={18} /> : <Play size={18} />}{" "}
@@ -454,9 +657,13 @@ export function ExperimentControls({
             </button>
             <span>{time.toFixed(1)} s</span>
           </>
-        ) : (
+        ) : settings.type === "fractions" ? (
           <span className="experiment-hint">
             {t("Touche une part de pizza !", "المس قطعة بيتزا!")}
+          </span>
+        ) : (
+          <span className="experiment-hint">
+            {t("Fais glisser les lumières !", "حرّك أشرطة الضوء!")}
           </span>
         )}
         <span className="experiment-badge">
@@ -464,7 +671,23 @@ export function ExperimentControls({
         </span>
       </div>
       <div className="experiment-sliders">
-        {settings.type === "bounce" ? (
+        {settings.type === "color" ? (
+          <>
+            {range("red", t("Rouge", "أحمر"), 0, 255, 1, settings.red ?? 255)}
+            {range("green", t("Vert", "أخضر"), 0, 255, 1, settings.green ?? 95)}
+            {range("blue", t("Bleu", "أزرق"), 0, 255, 1, settings.blue ?? 145)}
+          </>
+        ) : settings.type === "geometry" ? (
+          <>
+            {range("sides", t("Nombre de côtés", "عدد الأضلاع"), 3, 8, 1, settings.sides ?? 5)}
+            {range("rotation", t("Tourner la forme", "تدوير الشكل"), 0, 360, 15, settings.rotation ?? 0, "°")}
+          </>
+        ) : settings.type === "numberline" ? (
+          <>
+            {range("start", t("Je pars de", "أبدأ من"), -5, 5, 1, settings.start ?? -2)}
+            {range("jump", t("Mon saut", "قفزتي"), -5, 5, 1, settings.jump ?? 5)}
+          </>
+        ) : settings.type === "bounce" ? (
           <>
             {range(
               "height",

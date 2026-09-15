@@ -65,6 +65,8 @@ export type SimulationType =
   | "water"
   | "fractions";
 
+export type ConceptLabType = "color" | "geometry" | "numberline";
+
 export function requestedSimulationType(message: string): SimulationType | null {
   const latin = message
     .normalize("NFD")
@@ -95,6 +97,52 @@ export function requestedSimulationType(message: string): SimulationType | null 
   )
     return "fractions";
   return null;
+}
+
+export function requestedConceptLabType(
+  message: string,
+): ConceptLabType | null {
+  const latin = normalizedLatin(message);
+  if (
+    /\b(couleur|couleurs|rgb|lumiere).{0,80}(melang|combine|laboratoire|labo|experience|interacti)|\b(melang|combine).{0,50}(couleur|lumiere)/u.test(
+      latin,
+    ) ||
+    /(?:لون|ألوان|الوان|ضوء).{0,80}(?:مزج|اخلط|مختبر|تجربة|تفاعلية)|(?:امزج|اخلط|مزج).{0,50}(?:الألوان|الالوان|الضوء)|(?:مختبر|تجربة).{0,60}(?:الألوان|الالوان|الضوء|مزج)/u.test(
+      message,
+    )
+  )
+    return "color";
+  if (
+    /\b(forme|polygone|triangle|carre|pentagone|hexagone|sommets?|cotes?).{0,80}(construi|change|laboratoire|labo|experience|interacti)|\b(laboratoire|labo).{0,50}(geometrie|forme)/u.test(
+      latin,
+    ) ||
+    /(?:شكل|مضلع|مثلث|مربع|خماسي|سداسي|رؤوس|أضلاع|اضلاع).{0,80}(?:ابن|غيّر|غير|مختبر|تجربة|تفاعلية)|(?:مختبر).{0,50}(?:الهندسة|الأشكال|الاشكال)/u.test(
+      message,
+    )
+  )
+    return "geometry";
+  if (
+    /\b(droite numerique|ligne (?:des )?nombres|sauts? de nombres?|avance|recule).{0,80}(interacti|labo|laboratoire|montre|calcul|addition|soustraction)|\b(labo|laboratoire).{0,50}(nombres?|calcul)/u.test(
+      latin,
+    ) ||
+    /(?:خط الأعداد|خط الاعداد|قفزات الأعداد|قفزات الاعداد|تقدم|تراجع).{0,80}(?:تفاعلي|مختبر|أرني|ارني|جمع|طرح)/u.test(
+      message,
+    )
+  )
+    return "numberline";
+  return null;
+}
+
+export function requestsEquationSolver(message: string) {
+  const latin = normalizedLatin(message);
+  const asksToSolve =
+    /\b(resous|resoud|resoudre|solution|calcule|isole)\b/u.test(latin) ||
+    /(?:حل|احسب|اعزل)/u.test(message);
+  const hasEquation =
+    /(?:^|\s)(?:-?\d+(?:[.,]\d+)?\s*)?x\s*[+-]\s*\d+(?:[.,]\d+)?\s*=\s*-?\d+(?:[.,]\d+)?/iu.test(
+      message,
+    ) || /(?:equation|معادلة)/u.test(latin + message);
+  return asksToSolve && hasEquation;
 }
 
 export function normalizeBoardAction<T extends BoardMutation>(

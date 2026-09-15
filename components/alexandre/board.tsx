@@ -190,9 +190,12 @@ export const Board = forwardRef<BoardHandle, {
       setCapturing(false);
     }
   }
+  const isConceptLab = ["color", "geometry", "numberline"].includes(
+    scene.simulation?.type || "",
+  );
   return (
     <section
-      className="magic-board"
+      className={`magic-board ${isConceptLab ? "concept-lab-board" : ""}`}
       aria-label={t("Le tableau de Milo", "لوحة ميلو")}
     >
       <div className="board-caption">
@@ -203,16 +206,21 @@ export const Board = forwardRef<BoardHandle, {
           <h2>{scene.title}</h2>
           <p>{scene.subtitle}</p>
         </div>
-        <button
-          className="icon-button"
-          onClick={() => {
-            timeline.reset();
-            setReplay((v) => v + 1);
-          }}
-          aria-label={t("Rejouer les animations", "إعادة الحركة")}
-        >
-          <RotateCcw size={19} />
-        </button>
+        <div className="board-caption-actions">
+          {isConceptLab ? (
+            <span className="lab-live"><i /> {t("LABO INTERACTIF", "مختبر تفاعلي")}</span>
+          ) : null}
+          <button
+            className="icon-button"
+            onClick={() => {
+              timeline.reset();
+              setReplay((v) => v + 1);
+            }}
+            aria-label={t("Rejouer les animations", "إعادة الحركة")}
+          >
+            <RotateCcw size={19} />
+          </button>
+        </div>
       </div>
       <div className="scene-canvas">
         {!scene.shapes.length && !scene.simulation && !strokes.length ? (
