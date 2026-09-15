@@ -720,6 +720,20 @@
   color: #9684be;
   font-weight: 800;
 }
+.tool-group > button.clear-board {
+  color: #b18b82;
+}
+.tool-group > button.clear-board:hover:not(:disabled) {
+  background: #fff2ed;
+  color: #c36554;
+}
+.tool-group > button.clear-board.confirm {
+  background: #fff0eb;
+  color: #bd4f3d;
+  box-shadow: inset 0 0 0 1px #f3c7bc;
+  font-weight: 900;
+  animation: clear-confirm 0.75s ease-in-out infinite alternate;
+}
 .tool-group > button:disabled {
   opacity: 0.4;
   cursor: default;
@@ -2657,6 +2671,9 @@
 }
 @keyframes lab-live {
   50% { transform: scale(1.25); box-shadow: 0 0 0 7px #56c49810; }
+}
+@keyframes clear-confirm {
+  to { transform: translateY(-1px); box-shadow: inset 0 0 0 1px #eeb8aa, 0 3px 8px #b34f3b1f; }
 }
 @media (max-width: 390px) {
   .child-brand small {

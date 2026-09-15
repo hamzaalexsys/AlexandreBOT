@@ -17,6 +17,7 @@ import {
   X,
   Paintbrush,
   RotateCcw,
+  Trash2,
 } from "lucide-react";
 import type {
   ChildDrawingContext,
@@ -67,6 +68,7 @@ export const Board = forwardRef<BoardHandle, {
   const [insight, setInsight] = useState("");
   const [replay, setReplay] = useState(0);
   const [capturing, setCapturing] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
   const [error, setError] = useState("");
   const active = useRef(false);
   const dragged = useRef<string | null>(null);
@@ -74,6 +76,11 @@ export const Board = forwardRef<BoardHandle, {
   useEffect(() => {
     paths.current = strokes;
   }, [strokes]);
+  useEffect(() => {
+    if (!confirmClear) return;
+    const timeout = window.setTimeout(() => setConfirmClear(false), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [confirmClear]);
   const timeline = useTimeline(scene.simulation?.speed || 1);
   const selectedShape = scene.shapes.find((s) => s.id === selected);
   function point(event: PointerEvent<SVGSVGElement>) {
@@ -193,6 +200,31 @@ export const Board = forwardRef<BoardHandle, {
   const isConceptLab = ["color", "geometry", "numberline"].includes(
     scene.simulation?.type || "",
   );
+  const hasBoardContent =
+    strokes.length > 0 || scene.shapes.length > 0 || Boolean(scene.simulation);
+  function clearBoard() {
+    if (!confirmClear) {
+      setConfirmClear(true);
+      return;
+    }
+    timeline.reset();
+    onStrokes([]);
+    onChange({
+      id: scene.id,
+      title: t("Ton tableau est prêt", "لوحتك جاهزة"),
+      subtitle: t(
+        "Dessine quelque chose ou demande une nouvelle découverte à Milo.",
+        "ارسم شيئاً أو اطلب من ميلو اكتشافاً جديداً.",
+      ),
+      shapes: [],
+      simulation: null,
+    });
+    setMode("draw");
+    setSelected(null);
+    setInsight("");
+    setError("");
+    setConfirmClear(false);
+  }
   return (
     <section
       className={`magic-board ${isConceptLab ? "concept-lab-board" : ""}`}
@@ -497,6 +529,24 @@ export const Board = forwardRef<BoardHandle, {
             aria-label={t("Annuler le dernier trait", "إلغاء آخر خط")}
           >
             <Undo2 size={18} />
+          </button>
+          <button
+            className={`clear-board ${confirmClear ? "confirm" : ""}`}
+            disabled={busy || capturing || !hasBoardContent}
+            onClick={clearBoard}
+            aria-label={
+              confirmClear
+                ? t("Confirmer : vider le tableau", "تأكيد مسح اللوحة")
+                : t("Vider le tableau", "مسح اللوحة")
+            }
+            title={t("Vider seulement cette page", "مسح هذه الصفحة فقط")}
+          >
+            <Trash2 size={18} />
+            <span>
+              {confirmClear
+                ? t("Confirmer", "تأكيد")
+                : t("Vider", "مسح")}
+            </span>
           </button>
         </div>
         <button
