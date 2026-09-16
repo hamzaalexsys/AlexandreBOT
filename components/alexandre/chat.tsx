@@ -9,8 +9,12 @@ import {
   Square,
   Sparkles,
   RefreshCw,
+  Mic,
+  LoaderCircle,
+  CircleStop,
 } from "lucide-react";
 import { FoxAvatar, AlexandreAvatar } from "./avatars";
+import { ParentResponse } from "./parent-response";
 import type { Language, Message, Role } from "@/lib/contracts";
 export function Chat({
   role,
@@ -42,17 +46,68 @@ export function Chat({
   const [photo, setPhoto] = useState<string>();
   const [photoError, setPhotoError] = useState("");
   const [reading, setReading] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const [voiceError, setVoiceError] = useState("");
   const end = useRef<HTMLDivElement>(null);
   const file = useRef<HTMLInputElement>(null);
+  const recorder = useRef<MediaRecorder | null>(null);
+  const voiceStream = useRef<MediaStream | null>(null);
+  const voiceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
   useEffect(() => {
     end.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [messages, busy]);
   useEffect(
     () => () => {
       if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
+      if (voiceTimer.current) clearTimeout(voiceTimer.current);
+      if (recorder.current?.state === "recording") recorder.current.stop();
+      voiceStream.current?.getTracks().forEach((track) => track.stop());
+      if (audioCtxRef.current) void audioCtxRef.current.close();
     },
     [],
   );
+  useEffect(() => {
+    if (!recording) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx2d = canvas.getContext("2d");
+    if (!ctx2d) return;
+    const dpr = window.devicePixelRatio || 1;
+    const resize = () => {
+      canvas.width = Math.max(1, Math.round(canvas.clientWidth * dpr));
+      canvas.height = Math.max(1, Math.round(canvas.clientHeight * dpr));
+    };
+    resize();
+    const analyser = analyserRef.current;
+    const data = new Uint8Array(analyser ? analyser.frequencyBinCount : 64);
+    const gradient = ctx2d.createLinearGradient(0, 0, 0, canvas.height || 1);
+    gradient.addColorStop(0, "#8070c5");
+    gradient.addColorStop(1, "#ffad72");
+    let frame = 0;
+    const loop = () => {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx2d.clearRect(0, 0, w, h);
+      if (analyser) analyser.getByteFrequencyData(data);
+      const bars = 44;
+      const gap = 2 * dpr;
+      const barWidth = Math.max(1, (w - gap * (bars - 1)) / bars);
+      ctx2d.fillStyle = gradient;
+      for (let i = 0; i < bars; i++) {
+        const index = Math.floor((i / bars) * data.length);
+        const value = data[index] / 255;
+        const height = Math.max(2 * dpr, value * h * 0.94);
+        ctx2d.fillRect(i * (barWidth + gap), (h - height) / 2, barWidth, height);
+      }
+      frame = requestAnimationFrame(loop);
+    };
+    frame = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frame);
+  }, [recording]);
   async function attach(value: File | undefined) {
     if (!value) return;
     setPhotoError("");
@@ -93,6 +148,101 @@ export function Chat({
     } finally {
       URL.revokeObjectURL(url);
       if (file.current) file.current.value = "";
+    }
+  }
+  async function toggleRecording() {
+    setVoiceError("");
+    if (recording) {
+      recorder.current?.stop();
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setVoiceError(
+        t(
+          "Le micro n’est pas disponible dans ce navigateur.",
+          "الميكروفون غير متاح في هذا المتصفح.",
+        ),
+      );
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+      });
+      const mimeType = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg", "audio/mp4"].find(
+        (candidate) => MediaRecorder.isTypeSupported(candidate),
+      );
+      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      const chunks: BlobPart[] = [];
+      voiceStream.current = stream;
+      recorder.current = mediaRecorder;
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size) chunks.push(event.data);
+      };
+      mediaRecorder.onstop = async () => {
+        setRecording(false);
+        if (voiceTimer.current) clearTimeout(voiceTimer.current);
+        stream.getTracks().forEach((track) => track.stop());
+        voiceStream.current = null;
+        recorder.current = null;
+        analyserRef.current = null;
+        if (audioCtxRef.current) {
+          void audioCtxRef.current.close();
+          audioCtxRef.current = null;
+        }
+        const blob = new Blob(chunks, { type: mediaRecorder.mimeType || "audio/webm" });
+        if (blob.size < 200) return;
+        setTranscribing(true);
+        try {
+          const form = new FormData();
+          form.append("audio", blob, `alexandrebot.${blob.type.includes("ogg") ? "ogg" : blob.type.includes("mp4") ? "mp4" : "webm"}`);
+          form.append("lang", lang);
+          const response = await fetch("/api/transcribe", { method: "POST", body: form });
+          const result = (await response.json()) as { text?: unknown };
+          const transcript = typeof result.text === "string" ? result.text.trim() : "";
+          if (!response.ok || !transcript)
+            throw new Error();
+          setDraft((current) => [current.trim(), transcript].filter(Boolean).join(" "));
+        } catch {
+          setVoiceError(
+            t(
+              "Je n’ai pas pu transcrire cette fois. Réessaie en parlant près du micro.",
+              "تعذر تحويل الصوت هذه المرة. حاول مجدداً بالقرب من الميكروفون.",
+            ),
+          );
+        } finally {
+          setTranscribing(false);
+        }
+      };
+      mediaRecorder.start();
+      setRecording(true);
+      voiceTimer.current = setTimeout(() => mediaRecorder.stop(), 45_000);
+      try {
+        const AudioCtor =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext?: typeof AudioContext })
+            .webkitAudioContext;
+        if (AudioCtor) {
+          const audioCtx = new AudioCtor();
+          const source = audioCtx.createMediaStreamSource(stream);
+          const analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 256;
+          analyser.smoothingTimeConstant = 0.8;
+          source.connect(analyser);
+          void audioCtx.resume().catch(() => {});
+          audioCtxRef.current = audioCtx;
+          analyserRef.current = analyser;
+        }
+      } catch {
+        /* la visualisation est optionnelle, l'enregistrement continue */
+      }
+    } catch {
+      setVoiceError(
+        t(
+          "Autorise le micro pour dicter ton message.",
+          "اسمح باستعمال الميكروفون لإملاء رسالتك.",
+        ),
+      );
     }
   }
   function listen() {
@@ -168,16 +318,21 @@ export function Chat({
       >
         <div className="bubble assistant">{intro}</div>
         {messages.map((m) => (
-          <div key={m.id} className={`bubble ${m.role}`} dir="auto">
-            {m.content
-              .split(/(\*\*[^*\n]+\*\*)/g)
-              .map((part, index) =>
-                part.startsWith("**") && part.endsWith("**") ? (
-                  <strong key={index}>{part.slice(2, -2)}</strong>
-                ) : (
-                  part
-                ),
-              )}
+          <div key={m.id} className={`message-block ${m.role}`}>
+            <div className={`bubble ${m.role}`} dir="auto">
+              {m.content
+                .split(/(\*\*[^*\n]+\*\*)/g)
+                .map((part, index) =>
+                  part.startsWith("**") && part.endsWith("**") ? (
+                    <strong key={index}>{part.slice(2, -2)}</strong>
+                  ) : (
+                    part
+                  ),
+                )}
+            </div>
+            {role === "parent" && m.role === "assistant" && m.presentation ? (
+              <ParentResponse presentation={m.presentation} lang={lang} />
+            ) : null}
           </div>
         ))}
         {busy ? (
@@ -235,10 +390,23 @@ export function Chat({
           {photoError}
         </p>
       ) : null}
+      {voiceError ? <p role="alert" className="voice-error">{voiceError}</p> : null}
       {contextHint && !photo ? (
         <div className="board-context-hint" role="status">
           <Sparkles size={14} />
           {contextHint}
+        </div>
+      ) : null}
+      {recording ? (
+        <div className="voice-visualizer" role="status">
+          <span className="voice-dot" aria-hidden="true" />
+          <canvas ref={canvasRef} aria-hidden="true" />
+          <span className="voice-hint">
+            {t(
+              "Parle, puis clique sur Arrêter",
+              "تحدّث، ثم اضغط على إيقاف",
+            )}
+          </span>
         </div>
       ) : null}
       <form
@@ -275,8 +443,9 @@ export function Chat({
           }}
         />
         <div className="composer-tools">
-          {role === "student" ? (
-            <>
+          <div className="composer-actions">
+            {role === "student" ? (
+              <>
               <input
                 ref={file}
                 type="file"
@@ -295,15 +464,42 @@ export function Chat({
                 <ImagePlus size={21} />
                 <span>{t("Une photo", "صورة")}</span>
               </button>
-            </>
-          ) : (
-            <span className="composer-privacy">
-              {t(
-                "Base scolaire · Lecture seule",
-                "قاعدة البيانات المدرسية · قراءة فقط",
+              </>
+            ) : (
+              <span className="composer-privacy">
+                {t("Base scolaire · Lecture seule", "قاعدة البيانات المدرسية · قراءة فقط")}
+              </span>
+            )}
+            <button
+              type="button"
+              className={`voice-button ${recording ? "recording" : ""}`}
+              onClick={() => void toggleRecording()}
+              disabled={busy || transcribing}
+              aria-label={t(
+                recording ? "Arrêter la dictée" : "Dicter le message",
+                recording ? "إيقاف الإملاء" : "إملاء الرسالة",
               )}
-            </span>
-          )}
+              title={t(
+                recording ? "Arrêter la dictée" : "Dicter le message",
+                recording ? "إيقاف الإملاء" : "إملاء الرسالة",
+              )}
+            >
+              {transcribing ? (
+                <LoaderCircle className="spin" size={20} />
+              ) : recording ? (
+                <CircleStop size={20} />
+              ) : (
+                <Mic size={20} />
+              )}
+              <span>
+                {transcribing
+                  ? t("Transcription…", "جارٍ التحويل…")
+                  : recording
+                    ? t("Arrêter", "إيقاف")
+                    : t("Dicter", "إملاء")}
+              </span>
+            </button>
+          </div>
           {busy ? (
             <button
               type="button"

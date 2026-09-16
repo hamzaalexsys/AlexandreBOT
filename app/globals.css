@@ -190,6 +190,11 @@ h3 {
   gap: 26px;
   text-align: start;
 }
+.role-grid.single {
+  grid-template-columns: 1fr;
+  max-width: 480px;
+  margin: 0 auto;
+}
 .role-card {
   padding: 24px 28px 26px;
   border: 1px solid #e8d5be;
@@ -247,6 +252,46 @@ h3 {
   width: 100%;
   height: auto;
   overflow: visible;
+}
+.avatar-float .avatar-blink {
+  display: block;
+  position: relative;
+  width: 100%;
+}
+.avatar-float .avatar-blink img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 50%;
+}
+.avatar-float .avatar-blink .avatar-blink-closed {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  opacity: 0;
+  animation: avatar-blink 5.4s ease-in-out infinite;
+}
+.avatar-float.speaking .avatar-blink img {
+  filter: drop-shadow(0 0 14px rgba(240, 155, 85, 0.5));
+}
+@keyframes avatar-blink {
+  0%,
+  90%,
+  93.6%,
+  100% {
+    opacity: 0;
+  }
+  90.6%,
+  93% {
+    opacity: 1;
+  }
+}
+.brand-logo {
+  height: 50px;
+  width: auto;
+  display: block;
+  mix-blend-mode: multiply;
+  border-radius: 6px;
 }
 .doodle {
   position: absolute;

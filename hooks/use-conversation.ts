@@ -107,6 +107,7 @@ export function useConversation({
             id: crypto.randomUUID(),
             role: "assistant",
             content: reply.message,
+            presentation: reply.presentation,
           },
         ]);
         current.onReply(reply);

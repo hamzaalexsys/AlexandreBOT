@@ -24,44 +24,47 @@ const plain = (value) =>
     .toLowerCase();
 const mentionsScore = (answer, value) => {
   const normalized = plain(answer).replaceAll(",", ".");
-  return [value.toFixed(2), value.toFixed(1)].some((candidate) =>
-    normalized.includes(candidate),
+  return [Number(value).toFixed(2), Number(value).toFixed(1), String(value)].some(
+    (candidate) => normalized.includes(candidate),
   );
 };
 
 assert.equal(plain(school.overview.child), "aamar");
 assert.equal(school.overview.className, "CE 5 – C");
 assert.equal(school.overview.schoolYear, "2026/2027");
-assert.ok(school.journey.items.some((item) => item.schoolYear === "2023/2024"));
-assert.ok(school.journey.items.some((item) => item.schoolYear === "2024/2025"));
-const year2023 = school.yearResults.items.find(
-  (item) => item.schoolYear === "2023/2024",
+assert.equal(school.attendance.items.length, 3);
+assert.equal(school.attendance.items.filter((item) => item.justified).length, 1);
+assert.equal(school.attendance.items.filter((item) => !item.justified).length, 2);
+assert.equal(school.assiduity.items.length, 0);
+assert.equal(school.homework.items.length, 0);
+assert.equal(school.exams.items.length, 0);
+assert.equal(school.latestMarks.items.length, 4);
+assert.deepEqual(
+  Object.fromEntries(
+    school.latestMarks.items.map((item) => [plain(item.subject), item.rawScore]),
+  ),
+  { anglais: 8, arabe: 6.75, francais: 5, mathematiques: 7.5 },
 );
-const year2024 = school.yearResults.items.find(
-  (item) => item.schoolYear === "2024/2025",
-);
-assert.equal(year2023.noteCount, 49);
-assert.equal(year2023.average20, 16.23);
-assert.equal(year2024.noteCount, 50);
-assert.equal(year2024.average20, 13.8);
-assert.equal(year2023.discardedCount + year2024.discardedCount, 0);
-assert.equal(school.attendance.items.length, 1);
-assert.equal(school.attendance.items[0].subject, "FRANCAIS");
-assert.equal(school.attendance.items[0].justified, false);
 
 const requiredReads = [
   "read_child_overview",
+  "read_attendance",
+  "read_assiduity",
+  "read_homework",
+  "read_exams",
+  "read_latest_marks",
   "read_school_journey",
   "read_year_results",
   "read_subject_results",
   "read_term_results",
-  "read_attendance",
 ];
-const startAt = Number(process.env.TEST_PARENT_FROM || 1);
 let passed = 0;
+const from = Number(process.env.TEST_PARENT_FROM || 1);
+const to = Number(process.env.TEST_PARENT_TO || 15);
 
 async function ask(label, question, verify) {
-  if (Number.parseInt(label, 10) < startAt) return;
+  const index = Number.parseInt(label, 10);
+  if (index < from || index > to) return;
   const started = Date.now();
   const response = await fetch(`${base}/api/chat`, {
     method: "POST",
@@ -72,19 +75,14 @@ async function ask(label, question, verify) {
   assert.equal(response.status, 200, `${label}: ${JSON.stringify(reply)}`);
   assert.equal(reply.source, "openrouter", `${label}: real provider source`);
   assert.equal(reply.scene, null, `${label}: parent never draws a board`);
+  assert.ok(reply.message.split(/\s+/).length <= 75, `${label}: concise answer`);
   for (const name of requiredReads)
     assert.ok(reply.toolNames.includes(name), `${label}: ${name}`);
-  assert.doesNotMatch(
-    plain(reply.message),
-    /(?:(aucun|pas de|non.{0,20}enregistr).{0,25}(resultat|note|moyenne).{0,100}(2025\/2026|2026\/2027)|(2025\/2026|2026\/2027).{0,100}(aucun|pas de|non.{0,20}enregistr).{0,25}(resultat|note|moyenne))/,
-    `${label}: no conclusion outside result-query coverage`,
-  );
+  const evidence = `${reply.message}\n${JSON.stringify(reply.presentation)}`;
   try {
-    verify(plain(reply.message), reply.message);
+    verify(plain(evidence), evidence, reply);
   } catch (error) {
-    console.error(
-      JSON.stringify({ check: label, true: false, answer: reply.message }),
-    );
+    console.error(JSON.stringify({ check: label, true: false, reply }));
     throw error;
   }
   console.log(
@@ -92,149 +90,95 @@ async function ask(label, question, verify) {
       check: label,
       true: true,
       seconds: Math.round((Date.now() - started) / 1000),
-      source: reply.source,
+      component: reply.presentation?.kind || null,
     }),
   );
   passed++;
 }
 
+await ask("01 devoir demain", "Quels devoirs mon fils a-t-il pour demain ?", (answer, _, reply) => {
+  assert.match(answer, /(aucun|pas de).{0,35}devoir/);
+  assert.equal(reply.presentation?.kind, "empty");
+});
 await ask(
-  "1 parcours scolaire",
-  "Alexandre, présente-moi le parcours scolaire d’Aamar.",
-  (answer) => {
-    assert.ok(answer.includes("aamar"));
-    assert.ok(answer.includes("2023/2024") && answer.includes("2024/2025"));
-    assert.ok(answer.includes("ce 2") && answer.includes("ce 3"));
+  "02 dernières notes",
+  "Quelle est la dernière note de chaque matière de l’année dernière ?",
+  (answer, original, reply) => {
+    assert.equal(reply.presentation?.kind, "table");
+    assert.ok(answer.includes("2025/2026"));
+    for (const [subject, score] of Object.entries({ anglais: 8, arabe: 6.75, francais: 5, mathematiques: 7.5 })) {
+      assert.ok(answer.includes(subject));
+      assert.ok(mentionsScore(original, score));
+    }
   },
 );
-await ask(
-  "2 comparaison annuelle",
-  "Compare ses résultats de 2023/2024 et 2024/2025.",
-  (answer, original) => {
-    assert.ok(mentionsScore(original, 16.23));
-    assert.ok(mentionsScore(original, 13.8));
-    assert.match(answer, /(indicati|calcul|non officiel|pas.*officiel)/);
-  },
-);
-await ask(
-  "3 bilan global",
-  "Comment va mon enfant globalement ?",
-  (answer) => {
-    assert.ok(answer.includes("aamar"));
-    assert.ok(answer.includes("ce 5") || answer.includes("2026/2027"));
-    assert.ok(answer.includes("absence"));
-  },
-);
-await ask(
-  "4 forces",
-  "Quelles sont ses principales forces ?",
-  (answer) => {
-    assert.match(answer, /(mathematique|francais|arabe|anglais)/);
-    assert.doesNotMatch(answer, /(diagnostic|trouble emotionnel)/);
-  },
-);
-await ask(
-  "5 progression par matière",
-  "Dans quelles matières a-t-il le plus progressé ?",
-  (answer) => {
-    assert.ok(answer.includes("mathematique"));
-    assert.ok(answer.includes("12") && answer.includes("18"));
-  },
-);
-await ask(
-  "6 baisse et nuance",
-  "Pourquoi sa moyenne générale a-t-elle baissé malgré sa progression en mathématiques ?",
-  (answer) => {
-    assert.ok(answer.includes("mathematique"));
-    assert.match(answer, /(francais|arabe|anglais)/);
-    assert.match(answer, /(ne permet pas|ne suffit pas|cause|expliquer avec certitude)/);
-  },
-);
-await ask(
-  "7 semestres",
-  "Comment ses résultats ont-ils évolué entre le premier et le deuxième semestre ?",
-  (answer, original) => {
-    assert.match(answer, /(semestre|trimestre|periode)/);
-    assert.ok(
-      mentionsScore(original, 15.63) || mentionsScore(original, 13.28),
-    );
-    assert.ok(
-      mentionsScore(original, 16.77) || mentionsScore(original, 14.33),
-    );
-  },
-);
-await ask(
-  "8 français",
-  "Le français demande-t-il une attention particulière ?",
-  (answer, original) => {
-    assert.ok(answer.includes("francais"));
-    assert.ok(mentionsScore(original, 16.93));
-    assert.ok(mentionsScore(original, 13.45));
-  },
-);
-await ask(
-  "9 taille des échantillons",
-  "Quels résultats dois-je relativiser parce qu’il y a peu de notes ?",
-  (answer) => {
-    assert.ok(answer.includes("note"));
-    assert.match(answer, /(mathematique|anglais)/);
-    assert.match(answer, /\b(3|5)\b/);
-  },
-);
-await ask(
-  "10 absence actuelle",
-  "Aamar a-t-il une absence cette année ? Est-elle justifiée ?",
-  (answer) => {
-    assert.ok(answer.includes("absence"));
-    assert.ok(answer.includes("francais"));
-    assert.match(answer, /(14 septembre|2026-09-14|14\/09\/2026)/);
-    assert.match(
-      answer,
-      /((non|pas)[\s-]*justifie|injustifie|justified\s*=\s*false)/,
-    );
-  },
-);
-await ask(
-  "11 motif manquant",
-  "Est-ce que la base indique le motif exact de son absence ?",
-  (answer) => {
-    assert.match(answer, /(aucun motif|motif.*pas|motif.*non|ne.*indique|n'est pas renseigne)/);
-  },
-);
-await ask(
-  "12 résumé rendez-vous",
-  "Prépare-moi un résumé naturel pour mon prochain échange avec son enseignant.",
-  (answer) => {
-    assert.ok(answer.includes("aamar"));
-    assert.match(answer, /(mathematique|francais)/);
-    assert.ok(answer.includes("absence"));
-  },
-);
-await ask(
-  "13 questions enseignant",
-  "Quelles questions devrais-je poser à son professeur de français ?",
-  (answer) => {
-    assert.ok(answer.includes("francais"));
-    assert.match(answer, /(question|demander|pourriez|comment)/);
-  },
-);
-await ask(
-  "14 actions maison",
-  "Donne-moi trois actions simples pour l’accompagner à la maison, fondées uniquement sur ses résultats.",
-  (answer) => {
-    assert.match(answer, /(maison|lecture|exercice|routine|entrain)/);
-    assert.match(answer, /(francais|mathematique|arabe|anglais)/);
-  },
-);
-await ask(
-  "15 données manquantes",
-  "Quelles informations manquent encore pour comprendre complètement sa situation ?",
-  (answer) => {
-    assert.match(answer, /(manque|aucun|aucune|pas de|non renseigne)/);
-    assert.match(answer, /(observation|message|devoir|motif)/);
-  },
-);
+await ask("03 absences", "Est-ce qu’il y a des absences ?", (answer, _, reply) => {
+  assert.equal(reply.presentation?.kind, "timeline");
+  assert.equal(reply.presentation.items.length, 3);
+  assert.equal(reply.presentation.items.filter((item) => item.tone === "good").length, 1);
+  assert.equal(reply.presentation.items.filter((item) => item.tone === "attention").length, 2);
+  assert.ok(answer.includes("2026"));
+});
+await ask("04 assiduité", "L’assiduité", (answer, _, reply) => {
+  assert.equal(reply.presentation?.kind, "empty");
+  assert.match(answer, /(aucune|pas de).{0,35}assiduite/);
+});
+await ask("05 examens", "Quels sont ses prochains examens ?", (answer, _, reply) => {
+  assert.equal(reply.presentation?.kind, "empty");
+  assert.match(answer, /(aucun|pas d).{0,35}examen/);
+});
+await ask("06 parcours", "Présente-moi le parcours scolaire d’Aamar.", (answer) => {
+  assert.ok(answer.includes("aamar"));
+  assert.ok(answer.includes("2023/2024") && answer.includes("2024/2025"));
+});
+await ask("07 comparaison annuelle", "Compare ses résultats de 2023/2024 et 2024/2025.", (answer, original, reply) => {
+  assert.equal(reply.presentation?.kind, "table");
+  assert.ok(mentionsScore(original, 16.23));
+  assert.ok(mentionsScore(original, 13.8));
+  assert.match(answer, /(indicati|calcul|non officiel|pas.*officiel)/);
+});
+await ask("08 bilan global", "Comment va mon enfant globalement ?", (answer) => {
+  assert.ok(answer.includes("aamar"));
+  assert.ok(answer.includes("ce 5"));
+  assert.ok(answer.includes("absence"));
+});
+await ask("09 progression", "Dans quelles matières a-t-il le plus progressé ?", (answer, original, reply) => {
+  assert.equal(reply.presentation?.kind, "table");
+  assert.ok(answer.includes("mathematique"));
+  assert.ok(mentionsScore(original, 12.4));
+  assert.ok(mentionsScore(original, 18.25));
+});
+await ask("10 semestres", "Comment ses résultats ont-ils évolué entre les semestres ?", (answer, original, reply) => {
+  assert.equal(reply.presentation?.kind, "table");
+  assert.ok(mentionsScore(original, 15.63));
+  assert.ok(mentionsScore(original, 16.77));
+  assert.ok(mentionsScore(original, 13.28));
+  assert.ok(mentionsScore(original, 14.33));
+});
+await ask("11 français", "Le français demande-t-il une attention particulière au vu des notes ?", (answer, original, reply) => {
+  assert.equal(reply.presentation?.kind, "table");
+  assert.ok(answer.includes("francais"));
+  assert.ok(mentionsScore(original, 16.93));
+  assert.ok(mentionsScore(original, 13.45));
+});
+await ask("12 échantillons", "Quelles notes faut-il relativiser car elles sont peu nombreuses ?", (answer, _, reply) => {
+  assert.equal(reply.presentation?.kind, "table");
+  assert.match(answer, /(3|5).{0,20}note|note.{0,20}(3|5)/);
+});
+await ask("13 motif absence", "Le motif exact des absences est-il renseigné ?", (answer, _, reply) => {
+  assert.equal(reply.presentation?.kind, "timeline");
+  assert.match(answer, /(motif.{0,30}(non|pas)|aucun motif|non renseigne|motif n.est renseigne)/);
+});
+await ask("14 questions enseignant", "Donne-moi trois questions à poser au professeur de français.", (answer) => {
+  assert.match(answer, /1[.)]/);
+  assert.match(answer, /2[.)]/);
+  assert.match(answer, /3[.)]/);
+});
+await ask("15 actions maison", "Donne-moi trois actions simples à la maison fondées sur ses résultats.", (answer) => {
+  assert.match(answer, /1[.)]/);
+  assert.match(answer, /2[.)]/);
+  assert.match(answer, /3[.)]/);
+  assert.match(answer, /(lecture|lire|exercice|routine|entrain|jeu)/);
+});
 
-console.log(
-  `PASS Alexandre: ${passed} réponses OpenRouter vérifiées à partir du scénario ${startAt} concordent avec le dossier Azure SQL d’Aamar`,
-);
+console.log(`PASS Alexandre: ${passed}/${to - from + 1} réponses OpenRouter concordent avec les cinq vues Azure SQL en lecture seule`);

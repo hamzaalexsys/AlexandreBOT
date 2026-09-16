@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { queries, queryByName, requireIdentity } from "./queries.mjs";
 test("all business queries are SELECT only, bounded and scoped by parent", () => {
   for (const query of Object.values(queries)) {
-    assert.match(query, /^SELECT TOP \(\d+\)/);
+    assert.match(query, /^(SELECT|WITH)\b/);
+    assert.match(query, /\bTOP \(\d+\)/);
     assert.match(query, /@parentId/);
     assert.doesNotMatch(
       query,

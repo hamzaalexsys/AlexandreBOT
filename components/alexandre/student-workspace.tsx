@@ -238,9 +238,11 @@ export function StudentWorkspace({
     >
       <header className="child-header">
         <div className="child-brand">
-          <span className="brand-symbol">
-            a<span>✦</span>
-          </span>
+          <img
+            className="brand-logo"
+            src="/logo-gs-alexandre.jpg"
+            alt="Groupe Scolaire Alexandre"
+          />
           <div>
             <strong>
               Alexandre<span>BOT</span>

@@ -104,86 +104,19 @@ export function AlexandreAvatar({ speaking = false }: { speaking?: boolean }) {
     <div
       className={`alexandre-avatar avatar-float ${speaking ? "speaking" : ""}`}
     >
-      <svg
-        viewBox="0 0 280 280"
+      <span
+        className="avatar-blink"
         role="img"
-        aria-label="Alexandre, souriant, en djellaba et casquette"
+        aria-label="Alexandre, souriant et clignant des yeux"
       >
-        <ellipse
-          cx="140"
-          cy="257"
-          rx="73"
-          ry="9"
-          fill="#355846"
-          opacity=".12"
+        <img src="/alexandre-avatar-open.png" alt="" draggable={false} />
+        <img
+          src="/alexandre-avatar-closed.png"
+          alt=""
+          className="avatar-blink-closed"
+          draggable={false}
         />
-        <path
-          d="M103 155Q57 172 61 248L220 248Q217 179 177 157L159 145Z"
-          fill="#50705b"
-        />
-        <path d="M105 158L139 195L178 157L163 244L114 244Z" fill="#dcd3b6" />
-        <path d="M129 171L140 193L151 171L147 253L135 253Z" fill="#f5ecda" />
-        <path
-          d="M96 176L85 241M183 176L197 239"
-          stroke="#36503f"
-          strokeWidth="4"
-          fill="none"
-        />
-        <path
-          d="M131 200H151M132 218H150M133 236H148"
-          stroke="#ae986e"
-          strokeWidth="3"
-        />
-        <path d="M118 138L117 160Q140 178 164 157L162 136" fill="#dca77a" />
-        <ellipse cx="91" cy="109" rx="10" ry="17" fill="#e6b58c" />
-        <ellipse cx="190" cy="109" rx="10" ry="17" fill="#e6b58c" />
-        <path
-          d="M93 66Q140 38 189 69L185 123Q181 157 142 165Q98 156 94 124Z"
-          fill="#efc49c"
-        />
-        <path
-          d="M95 100L96 70L109 71L101 103M181 77L188 76L187 105"
-          fill="#465044"
-        />
-        <path
-          d="M103 97Q114 90 126 96M155 95Q169 88 178 96"
-          stroke="#4c4b3e"
-          strokeWidth="5"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <g className="avatar-eyes" fill="#384439">
-          <ellipse cx="115" cy="108" rx="4.5" ry="6" />
-          <ellipse cx="166" cy="108" rx="4.5" ry="6" />
-        </g>
-        <path
-          d="M139 109L134 126L144 127"
-          fill="none"
-          stroke="#d39e75"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        <path
-          d="M122 138Q140 153 159 136"
-          fill="#fff9ee"
-          stroke="#aa7059"
-          strokeWidth="2"
-          strokeLinejoin="round"
-          className="avatar-mouth"
-        />
-        <path d="M89 75Q87 30 132 27Q184 22 192 65L199 78Z" fill="#365843" />
-        <path
-          d="M84 73Q143 61 204 73Q191 90 165 81Q126 77 84 85Z"
-          fill="#233e2f"
-        />
-        <path d="M138 34L141 60" stroke="#718774" strokeWidth="2" />
-        <circle cx="109" cy="129" r="9" fill="#e5a382" opacity=".4" />
-        <circle cx="174" cy="129" r="9" fill="#e5a382" opacity=".4" />
-        <path
-          d="M79 223Q59 222 63 202Q67 194 78 202L86 213M204 219Q225 209 218 194Q209 189 200 204"
-          fill="#efc49c"
-        />
-      </svg>
+      </span>
     </div>
   );
 }

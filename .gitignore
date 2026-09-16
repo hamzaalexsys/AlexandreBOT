@@ -67,3 +67,9 @@ next-env.d.ts
 /work/
 /.cache/
 /.turbo/
+
+# local runtime artifacts
+/.sites-runtime/
+/.wrangler/
+/dist/
+.playwright-mcp/

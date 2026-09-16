@@ -8,8 +8,15 @@ type Resource =
   | "children"
   | "learning"
   | "attendance"
+  | "assiduity"
   | "messages"
   | "homework"
+  | "exams"
+  | "latestMarks"
+  | "markDetails"
+  | "competencies"
+  | "teachers"
+  | "activities"
   | "journey"
   | "yearResults"
   | "subjectResults"
@@ -49,8 +56,15 @@ export function createSchoolGatewayClient(config: {
           "children",
           "learning",
           "attendance",
+          "assiduity",
           "messages",
           "homework",
+          "exams",
+          "latestMarks",
+          "markDetails",
+          "competencies",
+          "teachers",
+          "activities",
           "journey",
           "yearResults",
           "subjectResults",
@@ -78,7 +92,7 @@ export function createSchoolGatewayClient(config: {
         data.source !== "school" ||
         typeof data.readAt !== "string" ||
         !Array.isArray(data.items) ||
-        data.items.length > 100
+        data.items.length > 260
       )
         throw new Error("INVALID_SCHOOL_RESPONSE");
       return data;

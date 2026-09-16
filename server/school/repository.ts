@@ -7,8 +7,15 @@ export type SchoolRead =
   | "overview"
   | "learning"
   | "attendance"
+  | "assiduity"
   | "messages"
   | "homework"
+  | "exams"
+  | "latestMarks"
+  | "markDetails"
+  | "competencies"
+  | "teachers"
+  | "activities"
   | "journey"
   | "yearResults"
   | "subjectResults"
@@ -102,7 +109,7 @@ const liveRepository: SchoolRepository = {
         label: text(item.label),
         justified:
           item.justified == null ? null : Number(item.justified) === 1,
-        reason: text(item.justification),
+        reason: text(item.label),
       }));
       return {
         ...common,
@@ -115,6 +122,26 @@ const liveRepository: SchoolRepository = {
             : lang === "fr"
               ? `${items.length} absence${items.length > 1 ? "s" : ""} enregistrée${items.length > 1 ? "s" : ""} cette année scolaire.`
               : `عدد حالات الغياب المسجّلة هذه السنة: ${items.length}.`,
+      };
+    }
+    if (section === "assiduity") {
+      const items = result.items.map((item) => ({
+        date: date(item.observedAt),
+        subject: text(item.subject),
+        label: text(item.label),
+        comment: text(item.comment),
+      }));
+      return {
+        ...common,
+        items,
+        note:
+          items.length === 0
+            ? lang === "fr"
+              ? "Aucun enregistrement d’assiduité pour cette année scolaire."
+              : "لا توجد ملاحظة مواظبة مسجلة خلال هذه السنة الدراسية."
+            : lang === "fr"
+              ? `${items.length} enregistrement${items.length > 1 ? "s" : ""} d’assiduité cette année.`
+              : `عدد ملاحظات المواظبة المسجلة هذه السنة: ${items.length}.`,
       };
     }
     if (section === "messages")
@@ -131,7 +158,94 @@ const liveRepository: SchoolRepository = {
         ...common,
         items: result.items.map((item) => ({
           description: text(item.description),
+          publishedAt: date(item.publishedAt),
           dueDate: date(item.dueDate),
+          subject: text(item.subject),
+          documentType: text(item.documentType),
+        })),
+      };
+    if (section === "exams")
+      return {
+        ...common,
+        items: result.items.map((item) => ({
+          examDate: date(item.examDate),
+          exam: text(item.exam),
+          subject: text(item.subject),
+          examType: text(item.examType),
+          term: text(item.term),
+          schoolYear: text(item.schoolYear),
+        })),
+      };
+    if (section === "latestMarks")
+      return {
+        ...common,
+        items: result.items.map((item) => ({
+          schoolYear: text(item.schoolYear),
+          subject: text(item.subject),
+          exam: text(item.exam),
+          examDate: date(item.examDate),
+          rawScore: number(item.rawScore),
+          scale: number(item.scale),
+          score20: number(item.score20),
+        })),
+      };
+    if (section === "markDetails")
+      return {
+        ...common,
+        scaleNote:
+          lang === "fr"
+            ? "Chaque note individuelle valide est ramenée sur 20 ; les notes au-delà de 250 lignes ne sont pas renvoyées."
+            : "كل نقطة فردية صالحة محولة إلى 20؛ النقاط بعد 250 سطراً غير مرجعة.",
+        items: result.items.map((item) => ({
+          schoolYear: text(item.schoolYear),
+          term: text(item.term),
+          subject: text(item.subject),
+          exam: text(item.exam),
+          examDate: date(item.examDate),
+          rawScore: number(item.rawScore),
+          scale: number(item.scale),
+          score20: number(item.score20),
+        })),
+      };
+    if (section === "competencies")
+      return {
+        ...common,
+        scaleNote:
+          lang === "fr"
+            ? "Chaque compétence est évaluée sur une échelle de 0 (non maîtrisée) à 3 (maîtrisée) lors d’un examen."
+            : "كل كفاءة يتم تقييمها على سلم من 0 (غير مكتسبة) إلى 3 (مكتسبة) خلال اختبار.",
+        items: result.items.map((item) => ({
+          subject: text(item.subject),
+          competency: text(item.competency),
+          code: text(item.code),
+          recurring: item.recurring == null ? null : Number(item.recurring) === 1,
+          examDate: date(item.examDate),
+          score: number(item.score),
+        })),
+      };
+    if (section === "teachers")
+      return {
+        ...common,
+        method:
+          lang === "fr"
+            ? "Enseignants de la classe actuelle par matière (nom uniquement, sans coordonnées)."
+            : "أساتذة القسم الحالي حسب المادة (الاسم فقط، بدون معلومات الاتصال).",
+        items: result.items.map((item) => ({
+          className: text(item.className),
+          subject: text(item.subject),
+          lastName: text(item.lastName),
+          firstName: text(item.firstName),
+        })),
+      };
+    if (section === "activities")
+      return {
+        ...common,
+        items: result.items.map((item) => ({
+          schoolYear: text(item.schoolYear),
+          activityType: text(item.activityType),
+          activity: text(item.activity),
+          activityDate: date(item.activityDate),
+          className: text(item.className),
         })),
       };
     if (section === "journey")

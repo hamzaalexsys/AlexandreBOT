@@ -10,10 +10,24 @@ const descriptions: Record<string, string> = {
     "Read dated learning observations and skills, including uncertainties.",
   read_attendance:
     "Read recorded absences for the authorised child and period.",
+  read_assiduity:
+    "Read dated school assiduity observations for the authorised child.",
   read_school_messages:
     "Read dated direction/teacher messages; never send or modify a message.",
   read_homework:
     "Read recent homework for the authorised child's current class; never create or modify homework.",
+  read_exams:
+    "Read recent and upcoming exams for the authorised child's current class and school year.",
+  read_latest_marks:
+    "Read the latest valid exam mark in every subject from the most recent completed school year.",
+  read_mark_details:
+    "Read every valid individual exam mark (exam, date, semester, subject, score and scale) across the school years on record, newest years first.",
+  read_competency_scores:
+    "Read competency mastery scores (0 not mastered to 3 mastered) per targeted competency, subject and exam date.",
+  read_class_teachers:
+    "Read the teachers of the child's current class by subject (names only, no contact details).",
+  read_student_activities:
+    "Read extracurricular activities the child is enrolled in (type, description, date, class).",
   read_school_journey:
     "Read the authorised child's class-by-class school journey across available years.",
   read_year_results:
@@ -29,8 +43,15 @@ const parentTools = [
   "read_child_overview",
   "read_learning",
   "read_attendance",
+  "read_assiduity",
   "read_school_messages",
   "read_homework",
+  "read_exams",
+  "read_latest_marks",
+  "read_mark_details",
+  "read_competency_scores",
+  "read_class_teachers",
+  "read_student_activities",
   "read_school_journey",
   "read_year_results",
   "read_subject_results",
@@ -190,8 +211,15 @@ export async function executeTool(
     read_child_overview: "overview",
     read_learning: "learning",
     read_attendance: "attendance",
+    read_assiduity: "assiduity",
     read_school_messages: "messages",
     read_homework: "homework",
+    read_exams: "exams",
+    read_latest_marks: "latestMarks",
+    read_mark_details: "markDetails",
+    read_competency_scores: "competencies",
+    read_class_teachers: "teachers",
+    read_student_activities: "activities",
     read_school_journey: "journey",
     read_year_results: "yearResults",
     read_subject_results: "subjectResults",

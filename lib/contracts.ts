@@ -84,6 +84,86 @@ export const quizSchema = z
     explanation: z.string().max(350),
   })
   .refine((q) => q.correctIndex < q.options.length);
+const presentationText = z.string().trim().min(1).max(180);
+export const parentPresentationSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      kind: z.literal("table"),
+      title: presentationText,
+      caption: z.string().trim().max(240).optional(),
+      columns: z.array(presentationText).min(2).max(4),
+      rows: z.array(z.array(presentationText).min(2).max(4)).max(30),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("timeline"),
+      title: presentationText,
+      caption: z.string().trim().max(240).optional(),
+      items: z
+        .array(
+          z
+            .object({
+              date: presentationText,
+              title: presentationText,
+              detail: z.string().trim().max(280),
+              tone: z.enum(["good", "attention", "neutral"]),
+            })
+            .strict(),
+        )
+        .max(12),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("tasks"),
+      title: presentationText,
+      caption: z.string().trim().max(240).optional(),
+      items: z
+        .array(
+          z
+            .object({
+              dueDate: presentationText,
+              subject: presentationText,
+              description: z.string().trim().min(1).max(320),
+            })
+            .strict(),
+        )
+        .max(12),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("empty"),
+      title: presentationText,
+      detail: z.string().trim().min(1).max(320),
+    })
+    .strict(),
+]);
+export const parentPresentationRequestSchema = z.object({
+  source: z.enum([
+    "latest_marks",
+    "mark_details",
+    "competencies",
+    "teachers",
+    "activities",
+    "journey",
+    "year_results",
+    "subject_results",
+    "term_results",
+    "attendance",
+    "assiduity",
+    "homework",
+    "exams",
+  ]),
+  title: z.string().trim().max(120).nullable(),
+  caption: z.string().trim().max(180).nullable(),
+  subject: z.string().trim().max(60).nullable(),
+  schoolYear: z.string().trim().max(20).nullable(),
+});
+export type ParentPresentationRequest = z.infer<
+  typeof parentPresentationRequestSchema
+>;
 export const replySchema = z.object({
   message: z.string().min(1).max(4500),
   scene: sceneSchema.nullable(),
@@ -91,6 +171,7 @@ export const replySchema = z.object({
   removeShapeIds: z.array(z.string().max(40)).max(45).default([]),
   quiz: quizSchema.nullable(),
   suggestions: z.array(z.string().max(220)).max(3),
+  presentation: parentPresentationSchema.nullable().optional(),
 });
 export type Scene = z.infer<typeof sceneSchema>;
 export type Simulation = z.infer<typeof simulationSchema>;
@@ -98,6 +179,7 @@ export type Shape = z.infer<typeof shapeSchema>;
 export type Stroke = { points: string; color: string };
 export type ChildDrawingContext = { strokeCount: number };
 export type Quiz = z.infer<typeof quizSchema>;
+export type ParentPresentation = z.infer<typeof parentPresentationSchema>;
 export type Reply = z.infer<typeof replySchema> & {
   source: "openrouter" | "guided";
   toolNames?: string[];
@@ -106,4 +188,5 @@ export type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  presentation?: ParentPresentation | null;
 };

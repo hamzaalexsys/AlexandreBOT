@@ -24,6 +24,9 @@ const plain = (value: string) =>
 
 const compact = (value: string) => plain(value).replace(/[^a-z0-9\u0600-\u06ff]/gu, "");
 
+const multiYearIntent = (q: string) =>
+  /(evolution|evolu|compar|progress|au cours des annees|au fil des annees|toutes.{0,20}matieres|عبر.{0,12}السنوات|تطور|مقارنة|جميع.{0,12}المواد)/.test(q);
+
 const hasUnsupportedResultCoverageClaim = (value: string) =>
   plain(value)
     .split(/(?<=[.!?؟;])\s*|\n+/u)
@@ -58,13 +61,35 @@ const mentionsScore = (answer: string, value: unknown) => {
   return parsed !== null && scoreVariants(parsed).some((score) => answer.includes(score));
 };
 
+const mentionsDate = (answer: string, value: unknown) => {
+  const raw = text(value).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return true;
+  if (answer.includes(raw)) return true;
+  const [, month, day] = raw.split("-").map(Number);
+  const months = [
+    "janvier",
+    "fevrier",
+    "mars",
+    "avril",
+    "mai",
+    "juin",
+    "juillet",
+    "aout",
+    "septembre",
+    "octobre",
+    "novembre",
+    "decembre",
+  ];
+  return new RegExp(`\\b${day}\\s+(?:${months[month - 1]}|${months[month - 1]?.slice(0, 4)})`).test(answer);
+};
+
 const cleanDataText = (value: unknown) =>
   text(value).replace(/\s+/g, " ").slice(0, 400);
 
 const itemLine = (parts: unknown[]) =>
   parts.map(cleanDataText).filter(Boolean).join(" | ");
 
-export function parentFactDigest(facts: ParentFact[]) {
+export function parentFactDigest(facts: ParentFact[], question = "") {
   const overview = dataFor(facts, "read_child_overview");
   const journey = itemsFor(facts, "read_school_journey");
   const years = itemsFor(facts, "read_year_results");
@@ -74,16 +99,148 @@ export function parentFactDigest(facts: ParentFact[]) {
   const learning = itemsFor(facts, "read_learning");
   const messages = itemsFor(facts, "read_school_messages");
   const homework = itemsFor(facts, "read_homework");
+  const assiduity = itemsFor(facts, "read_assiduity");
+  const exams = itemsFor(facts, "read_exams");
+  const latestMarks = itemsFor(facts, "read_latest_marks");
+  const markDetails = itemsFor(facts, "read_mark_details");
+  const competencies = itemsFor(facts, "read_competency_scores");
+  const teachers = itemsFor(facts, "read_class_teachers");
+  const activities = itemsFor(facts, "read_student_activities");
 
-  return [
+  const q = plain(question);
+  const markDetailsFocus =
+    /(note|notes).{0,30}(detail|detailler|detaillees)|detail.{0,25}(note|notes)|chaque note|toutes les notes|كل نقطة|تفاصيل.{0,10}نقط|نقط.{0,15}تفاصيل/.test(q);
+  const focused = /(devoir|travail.{0,20}(demain|maison)|واجب|غد)/.test(q)
+    ? "homework"
+    : /(assiduite|assidu|مواظب|انضباط)/.test(q)
+      ? "assiduity"
+      : /(absence|absent|justifi|motif|غياب)/.test(q)
+        ? "attendance"
+        : /(competence|capacite|savoir-faire|مهارة|كفاءة)/.test(q)
+          ? "competencies"
+          : /(examen|controle|evaluation|امتحان|فرض)/.test(q)
+            ? "exams"
+            : /(qui est le|qui sont les|qui enseigne|le nom du|le nom de la|les noms des).{0,40}(prof|professeur|enseign)|مين الأستاذ|من هو الأستاذ/.test(q)
+              ? "teachers"
+              : /(activite|parascolaire|excursion|sortie scolaire|نشاط|أنشطة|رحلة)/.test(q)
+                ? "activities"
+                : /(parcours|scolarite|annee.{0,10}classe|classe.{0,10}annee|مسار)/.test(q)
+                  ? "journey"
+                  : markDetailsFocus
+                  ? "markDetails"
+                  : !multiYearIntent(q) &&
+                      /(derniere|dernieres|recent).{0,35}note|note.{0,35}(derniere|annee derniere)|آخر.{0,20}(نقط|علام)|نقط.{0,20}السنة الماضية/.test(q)
+                    ? "latestMarks"
+                    : null;
+  const competencyRows = (() => {
+    const seen = new Set<string>();
+    const unique: Item[] = [];
+    for (const item of competencies) {
+      const key = `${text(item.subject)}|${text(item.competency)}|${text(item.examDate)}|${text(item.score)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      unique.push(item);
+    }
+    return unique.sort((left, right) => number(left.score)! - number(right.score)!);
+  })();
+  const competencyBuckets: Record<string, { total: number; count: number }> = {};
+  for (const item of competencyRows) {
+    const score = number(item.score);
+    if (score === null) continue;
+    const subject = text(item.subject) || "UNKNOWN";
+    const bucket = competencyBuckets[subject] || (competencyBuckets[subject] = { total: 0, count: 0 });
+    bucket.total += score;
+    bucket.count += 1;
+  }
+  const competencySummary = Object.entries(competencyBuckets)
+    .map(([subject, bucket]) => `${subject}: ${Math.round((bucket.total / bucket.count) * 10) / 10}/3 over ${bucket.count} evaluations`)
+    .join(" ; ");
+  const markGroups = new Map<string, Item[]>();
+  for (const item of markDetails) {
+    const key = `${text(item.schoolYear)}|${text(item.subject)}`;
+    const bucket = markGroups.get(key) || (markGroups.set(key, []).get(key) as Item[]);
+    bucket.push(item);
+  }
+  const latestDetailYear = markDetails
+    .map((item) => text(item.schoolYear))
+    .sort()
+    .at(-1) || "";
+  const latestYearLine = [...markGroups.entries()]
+    .filter(([key]) => key.startsWith(`${latestDetailYear}|`))
+    .map(([key, items]) =>
+      itemLine([
+        key.split("|")[1],
+        ...items.map(
+          (item) => `${item.rawScore}/${item.scale} ${text(item.exam)} ${text(item.examDate).slice(0, 10)}`,
+        ),
+      ]),
+    )
+    .join(" ; ");
+  const earlierYearsLine = [...markGroups.entries()]
+    .filter(([key]) => !key.startsWith(`${latestDetailYear}|`))
+    .map(([key, items]) =>
+      itemLine([key.split("|")[0], key.split("|")[1], ...items.map((item) => `${item.rawScore}/${item.scale}`)]),
+    )
+    .join(" ; ");
+  const lines = [
     `OBSERVED AT | ${text(overview.observedAt)}`,
     `CURRENT CHILD | ${itemLine([overview.child, overview.className, overview.schoolYear, overview.age ? `${overview.age} years` : ""])}`,
+  ];
+  if (focused === "attendance")
+    lines.push(`CURRENT ATTENDANCE | ${attendance.length ? attendance.map((item) => itemLine([item.dateFrom, item.subject, `justified=${String(item.justified)}`, `reason=${text(item.reason) || "NOT RECORDED"}`])).join(" ; ") : "NO RECORDED ABSENCE"}`);
+  if (focused === "assiduity")
+    lines.push(`CURRENT ASSIDUITY OBSERVATIONS | ${assiduity.length ? assiduity.map((item) => itemLine([item.date, item.subject, item.label, item.comment || "NO COMMENT"])).join(" ; ") : "NONE"}`);
+  if (focused === "homework")
+    lines.push(`CURRENT HOMEWORK | ${homework.length ? homework.map((item) => itemLine([item.dueDate, item.subject, item.description])).join(" ; ") : "NONE"}`);
+  if (focused === "exams") {
+    lines.push(`CURRENT CLASS EXAMS | ${exams.length ? exams.map((item) => itemLine([item.examDate, item.subject, item.exam, item.examType])).join(" ; ") : "NONE"}`);
+    lines.push(`LATEST VALID MARK PER SUBJECT (supporting context for mark-evaluation follow-ups) | ${latestMarks.length ? latestMarks.map((item) => itemLine([item.schoolYear, item.subject, `${item.rawScore}/${item.scale}`, item.examDate, item.exam])).join(" ; ") : "NONE"}`);
+  }
+  if (focused === "latestMarks")
+    lines.push(`LATEST VALID MARK PER SUBJECT IN MOST RECENT COMPLETED YEAR | ${latestMarks.length ? latestMarks.map((item) => itemLine([item.schoolYear, item.subject, `${item.rawScore}/${item.scale}`, item.examDate, item.exam])).join(" ; ") : "NONE"}`);
+  if (focused === "markDetails")
+    lines.push(`EVERY VALID INDIVIDUAL MARK ON RECORD | ${markDetails.length ? markDetails.map((item) => itemLine([item.schoolYear, item.term, item.subject, item.exam, item.examDate, `${item.rawScore}/${item.scale}`, `score20=${item.score20}`])).join(" ; ") : "NONE"}`);
+  if (focused === "competencies")
+    lines.push(`COMPETENCY MASTERY SCORES 0..3 (WEAKEST FIRST, DEDUPLICATED) | ${competencyRows.length ? competencyRows.map((item) => itemLine([`score=${item.score}/3`, item.subject, text(item.examDate).slice(0, 10), item.competency])).join(" ; ") : "NONE"}`);
+  if (focused === "teachers")
+    lines.push(`CLASS TEACHERS BY SUBJECT (NAMES ONLY) | ${teachers.length ? teachers.map((item) => itemLine([item.subject, [item.firstName, item.lastName].filter(Boolean).join(" ")])).join(" ; ") : "NONE"}`);
+  if (focused === "activities")
+    lines.push(`STUDENT ACTIVITIES | ${activities.length ? activities.map((item) => itemLine([item.activityDate, item.activityType, item.activity, item.className])).join(" ; ") : "NONE"}`);
+  if (focused === "journey")
+    lines.push(`SCHOOL JOURNEY YEAR/CLASS PAIRS | ${journey.length ? journey.map((item) => itemLine([item.schoolYear, item.className, item.levelName, `current=${String(item.isCurrent)}`])).join(" ; ") : "NONE"}`);
+  if (focused)
+    return [
+      ...lines,
+      "Answer only from the requested category above. Do not mention categories absent from this focused data block.",
+      focused === "competencies" && competencyRows.length
+        ? "The competency evaluations listed above ARE the available data; never claim that no competency evaluations are recorded. Weakest scores are listed first."
+        : "",
+      focused === "journey"
+        ? "The journey pairs above are the class history; keep each year paired with its recorded class."
+        : "",
+      focused === "exams" && !exams.length
+        ? "No class exam rows exist. When the follow-up asks which evaluation produced a mark, answer from the LATEST VALID MARK line above and quote its exam label and date."
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+  return [
+    ...lines,
     `JOURNEY YEAR/CLASS PAIRS | ${journey.map((item) => itemLine([item.schoolYear, item.className])).join(" ; ")}`,
     `INDICATIVE YEAR RESULTS /20 | ${years.map((item) => itemLine([item.schoolYear, item.average20, `${item.noteCount} valid notes`, `${item.discardedCount} discarded`])).join(" ; ")}`,
     "RESULT QUERY COVERAGE | 2023/2024 and 2024/2025 only. Missing later years were not queried and must not be described as having no results.",
     `SUBJECT RESULTS /20 | ${subjects.map((item) => itemLine([item.schoolYear, item.subject, item.average20, `${item.noteCount} notes`])).join(" ; ")}`,
     `SEMESTER RESULTS /20 | ${terms.map((item) => itemLine([item.schoolYear, item.term, item.average20, `${item.noteCount} notes`])).join(" ; ")}`,
     `CURRENT ATTENDANCE | ${attendance.length ? attendance.map((item) => itemLine([item.dateFrom, item.subject, `justified=${String(item.justified)}`, `reason=${text(item.reason) || "NOT RECORDED"}`])).join(" ; ") : "NO RECORDED ABSENCE"}`,
+    `CURRENT ASSIDUITY OBSERVATIONS | ${assiduity.length ? assiduity.map((item) => itemLine([item.date, item.subject, item.label, item.comment || "NO COMMENT"])).join(" ; ") : "NONE"}`,
+    `CURRENT CLASS EXAMS | ${exams.length ? exams.map((item) => itemLine([item.examDate, item.subject, item.exam, item.examType])).join(" ; ") : "NONE"}`,
+    `LATEST VALID MARK PER SUBJECT IN MOST RECENT COMPLETED YEAR | ${latestMarks.length ? latestMarks.map((item) => itemLine([item.schoolYear, item.subject, `${item.rawScore}/${item.scale}`, item.examDate, item.exam])).join(" ; ") : "NONE"}`,
+    `LATEST COMPLETED YEAR (${latestDetailYear}) INDIVIDUAL MARKS | ${markDetails.length ? latestYearLine : "NONE"}`,
+    `EARLIER YEARS INDIVIDUAL MARKS BY SUBJECT | ${markDetails.length ? earlierYearsLine : "NONE"} (each value is rawScore/scale; full exam labels are available from read_mark_details when asked for details)`,
+    `COMPETENCY MASTERY SUMMARY 0..3 | ${competencies.length ? competencySummary : "NONE"}`,
+    `CLASS TEACHERS | ${teachers.length ? [...new Set(teachers.map((item) => itemLine([item.subject, [item.firstName, item.lastName].filter(Boolean).join(" ")])))].join(" ; ") : "NONE"}`,
+    `STUDENT ACTIVITIES | ${activities.length ? activities.map((item) => itemLine([item.activityDate, item.activityType, item.activity])).join(" ; ") : "NONE"}`,
     `CURRENT LEARNING RECORDS | ${learning.length ? learning.map((item) => itemLine([item.date, item.subject, item.skill, item.status])).join(" ; ") : "NONE"}`,
     `CURRENT SCHOOL MESSAGES | ${messages.length ? messages.map((item) => itemLine([item.date, item.title, item.text])).join(" ; ") : "NONE"}`,
     `CURRENT HOMEWORK | ${homework.length ? homework.map((item) => itemLine([item.dueDate, item.description])).join(" ; ") : "NONE"}`,
@@ -141,6 +298,9 @@ export function parentGroundingIssues(
   const subjects = itemsFor(facts, "read_subject_results");
   const terms = itemsFor(facts, "read_term_results");
   const attendance = itemsFor(facts, "read_attendance");
+  const assiduity = itemsFor(facts, "read_assiduity");
+  const homework = itemsFor(facts, "read_homework");
+  const latestMarks = itemsFor(facts, "read_latest_marks");
 
   if (hasUnsupportedResultCoverageClaim(a))
     issues.push(
@@ -215,7 +375,7 @@ export function parentGroundingIssues(
   if (/(absence|absent|justifi|motif)/.test(q) && attendance.length) {
     const item = attendance[0];
     const day = text(item.dateFrom);
-    if (day && !a.includes(day) && !a.includes("14 septembre"))
+    if (day && !mentionsDate(a, day))
       issues.push(`mention absence date ${day}`);
     const subject = plain(text(item.subject));
     if (subject && !a.includes(subject))
@@ -228,6 +388,32 @@ export function parentGroundingIssues(
     if (/motif/.test(q) && text(item.reason) === "" && !/(motif.*(non|pas)|aucun motif|n'est pas renseigne|ne.*indique)/.test(a))
       issues.push("state that no textual reason is recorded");
   }
+
+  if (
+    !multiYearIntent(q) &&
+    /(derniere|dernieres|recent).{0,35}note|note.{0,35}(derniere|annee derniere)/.test(q)
+  ) {
+    for (const item of latestMarks) {
+      const subject = plain(text(item.subject));
+      if (subject && !a.includes(subject))
+        issues.push(`mention latest-mark subject ${text(item.subject)}`);
+      if (!mentionsScore(a, item.rawScore))
+        issues.push(`mention latest raw mark ${text(item.rawScore)} for ${text(item.subject)}`);
+      const year = text(item.schoolYear);
+      if (year && !a.includes(year))
+        issues.push(`mention latest-mark school year ${year}`);
+    }
+  }
+
+  if (/(assiduite|assidu)/.test(q) && assiduity.length === 0) {
+    if (!/(aucun|aucune|pas de|non enregistre).{0,40}(observation|enregistrement).{0,30}assiduite|assiduite.{0,40}(aucun|aucune|pas de|non enregistre)/.test(a))
+      issues.push("state only that no assiduity observation is recorded");
+    if (/(aucun|aucune|pas de).{0,35}(retard|absence|difficulte|incident)/.test(a))
+      issues.push("do not infer that there were no delays, absences, difficulties or incidents from an empty assiduity view");
+  }
+
+  if (/(devoir|travail.{0,20}(demain|maison))/.test(q) && homework.length === 0 && !/(aucun|aucune|pas de|non publie|non enregistre)/.test(a))
+    issues.push("state that no homework is published in the authorised view");
 
   if (/(comment va|globalement|bilan global)/.test(q)) {
     const child = compact(text(overview.child));

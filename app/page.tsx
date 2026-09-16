@@ -4,12 +4,11 @@ import {
   ArrowRight,
   ArrowUpRight,
   Globe2,
-  Sparkles,
   ShieldCheck,
   BookOpen,
   Heart,
 } from "lucide-react";
-import { FoxAvatar, AlexandreAvatar } from "@/components/alexandre/avatars";
+import { AlexandreAvatar } from "@/components/alexandre/avatars";
 import { Workspace } from "@/components/alexandre/workspace";
 import type { Language, Role } from "@/lib/contracts";
 export default function Home() {
@@ -105,37 +104,7 @@ export default function Home() {
             "رفيق للتعلّم. وصلة لفهم طفلك ومرافقته.",
           )}
         </p>
-        <div className="role-grid">
-          <button
-            className="role-card child-choice"
-            disabled={busy}
-            onClick={() => enter("student")}
-          >
-            <div className="role-top">
-              <span className="pill">
-                <Sparkles size={14} />
-                {t("LE COIN DES CURIEUX", "ركن الفضوليين")}
-              </span>
-              <ArrowUpRight />
-            </div>
-            <div className="avatar-stage">
-              <span className="doodle d1">✦</span>
-              <span className="doodle d2">a + b</span>
-              <FoxAvatar />
-              <span className="doodle d3">✿</span>
-            </div>
-            <h2>{t("Je suis élève", "أنا تلميذ")}</h2>
-            <p>
-              {t(
-                "Dessine, explore et comprends avec Milo, ton renard préféré !",
-                "ارسم واستكشف وافهم مع ميلو، ثعلبك المفضّل!",
-              )}
-            </p>
-            <div className="role-action">
-              {t("C’est parti !", "هيا نبدأ!")}
-              <ArrowRight size={19} />
-            </div>
-          </button>
+        <div className="role-grid single">
           <button
             className="role-card parent-choice"
             disabled={busy}
@@ -195,12 +164,13 @@ export default function Home() {
 export function Brand() {
   return (
     <div className="brand">
-      <span className="brand-symbol">
-        a<span>✦</span>
-      </span>
+      <img
+        className="brand-logo"
+        src="/logo-gs-alexandre.jpg"
+        alt="Groupe Scolaire Alexandre"
+      />
       <span>
         Alexandre<span className="brand-light">BOT</span>
-        <small>GROUPE SCOLAIRE ALEXANDRE</small>
       </span>
     </div>
   );

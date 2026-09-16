@@ -1,12 +1,10 @@
 "use client";
 import { useCallback, useState } from "react";
-import { Globe2, LogOut, Heart, MessageCircle, RotateCcw } from "lucide-react";
+import { Globe2, LogOut, RotateCcw } from "lucide-react";
 import { StudentWorkspace } from "./student-workspace";
-import { ParentOverview } from "./parent-overview";
 import { Chat } from "./chat";
 import { useConversation } from "@/hooks/use-conversation";
 import type { Language, Role, Reply } from "@/lib/contracts";
-import { parentFocusFor, type ParentFocus } from "@/lib/parent-focus";
 type Props = {
   role: Role;
   lang: Language;
@@ -22,8 +20,6 @@ export function Workspace(props: Props) {
 }
 function ParentWorkspace({ lang, setLang, onExit }: Props) {
   const t = (fr: string, ar: string) => (lang === "fr" ? fr : ar);
-  const [view, setView] = useState("activity");
-  const [focus, setFocus] = useState<ParentFocus>("summary");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const onReply = useCallback(
     (reply: Reply) => setSuggestions(reply.suggestions),
@@ -31,8 +27,6 @@ function ParentWorkspace({ lang, setLang, onExit }: Props) {
   );
   const chat = useConversation({ role: "parent", lang, age: 9, onReply });
   function ask(text: string) {
-    setFocus(parentFocusFor(text));
-    setView("chat");
     void chat.send(text);
   }
   return (
@@ -43,16 +37,15 @@ function ParentWorkspace({ lang, setLang, onExit }: Props) {
     >
       <header className="child-header">
         <div className="child-brand">
-          <span className="brand-symbol">
-            a<span>✦</span>
-          </span>
+          <img
+            className="brand-logo"
+            src="/logo-gs-alexandre.jpg"
+            alt="Groupe Scolaire Alexandre"
+          />
           <div>
             <strong>
               Alexandre<span>BOT</span>
             </strong>
-            <small>
-              {t("Groupe scolaire Alexandre", "مجموعة مدارس ألكسندر")}
-            </small>
           </div>
         </div>
         <div className="header-actions">
@@ -87,31 +80,7 @@ function ParentWorkspace({ lang, setLang, onExit }: Props) {
             {t("Pilote local · lecture seule", "نسخة محلية · قراءة فقط")}
           </span>
         </div>
-        <div className="mobile-tabs">
-          <button
-            className={view === "activity" ? "active" : ""}
-            onClick={() => setView("activity")}
-          >
-            <Heart size={18} />
-            {t("Mon enfant", "طفلي")}
-          </button>
-          <button
-            className={view === "chat" ? "active" : ""}
-            onClick={() => setView("chat")}
-          >
-            <MessageCircle size={18} />
-            {t("Alexandre", "ألكسندر")}
-          </button>
-        </div>
-        <div className={`parent-grid view-${view}`}>
-          <div className="activity-column">
-            <ParentOverview
-              lang={lang}
-              onAsk={ask}
-              busy={chat.busy}
-              focus={focus}
-            />
-          </div>
+        <div className="parent-chat-layout">
           <div className="conversation-column">
             <Chat
               role="parent"
@@ -127,11 +96,13 @@ function ParentWorkspace({ lang, setLang, onExit }: Props) {
                 suggestions.length
                   ? suggestions
                   : [
-                      t("Comment va mon enfant ?", "كيف حال طفلي؟"),
+                      t("Quels devoirs a-t-il demain ?", "ما واجباته ليوم غد؟"),
                       t(
-                        "Comment l’aider à la maison ?",
-                        "كيف أساعده في البيت؟",
+                        "Sa dernière note par matière",
+                        "آخر نقطة حسب كل مادة",
                       ),
+                      t("A-t-il des absences ?", "هل لديه غيابات؟"),
+                      t("Son assiduité", "مواظبته"),
                     ]
               }
               onSend={ask}
@@ -144,7 +115,6 @@ function ParentWorkspace({ lang, setLang, onExit }: Props) {
               onClick={() => {
                 chat.reset();
                 setSuggestions([]);
-                setFocus("summary");
               }}
             >
               <RotateCcw size={15} />
