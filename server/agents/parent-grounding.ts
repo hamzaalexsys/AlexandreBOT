@@ -136,6 +136,8 @@ export function parentFactDigest(facts: ParentFact[], question = "") {
     const seen = new Set<string>();
     const unique: Item[] = [];
     for (const item of competencies) {
+      const score = number(item.score);
+      if (score === null || score < 0 || score > 3) continue;
       const key = `${text(item.subject)}|${text(item.competency)}|${text(item.examDate)}|${text(item.score)}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -201,7 +203,7 @@ export function parentFactDigest(facts: ParentFact[], question = "") {
   if (focused === "markDetails")
     lines.push(`EVERY VALID INDIVIDUAL MARK ON RECORD | ${markDetails.length ? markDetails.map((item) => itemLine([item.schoolYear, item.term, item.subject, item.exam, item.examDate, `${item.rawScore}/${item.scale}`, `score20=${item.score20}`])).join(" ; ") : "NONE"}`);
   if (focused === "competencies")
-    lines.push(`COMPETENCY MASTERY SCORES 0..3 (WEAKEST FIRST, DEDUPLICATED) | ${competencyRows.length ? competencyRows.map((item) => itemLine([`score=${item.score}/3`, item.subject, text(item.examDate).slice(0, 10), item.competency])).join(" ; ") : "NONE"}`);
+    lines.push(`COMPETENCY MASTERY SCORES 0..3 (WEAKEST FIRST, DEDUPLICATED) | ${competencyRows.length ? competencyRows.map((item) => itemLine([`score=${item.score}/3`, item.schoolYear, item.subject, text(item.examDate).slice(0, 10), item.competency])).join(" ; ") : "NONE"}`);
   if (focused === "teachers")
     lines.push(`CLASS TEACHERS BY SUBJECT (NAMES ONLY) | ${teachers.length ? teachers.map((item) => itemLine([item.subject, [item.firstName, item.lastName].filter(Boolean).join(" ")])).join(" ; ") : "NONE"}`);
   if (focused === "activities")

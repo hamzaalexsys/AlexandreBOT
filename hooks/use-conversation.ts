@@ -9,8 +9,14 @@ import {
   type Role,
   type Scene,
 } from "@/lib/contracts";
-export function useConversation({
-  role,
+
+const formatTime = (lang: Language) =>
+  new Intl.DateTimeFormat(lang === "fr" ? "fr-FR" : "ar-MA", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date());
+
+export function useConversation({  role,
   lang,
   scene,
   age,
@@ -55,7 +61,12 @@ export function useConversation({
       if (!retry)
         setMessages((m) => [
           ...m,
-          { id: crypto.randomUUID(), role: "user", content: message },
+          {
+            id: crypto.randomUUID(),
+            role: "user",
+            content: message,
+            time: formatTime(current.lang),
+          },
         ]);
       try {
         const response = await fetch("/api/chat", {
@@ -108,6 +119,7 @@ export function useConversation({
             role: "assistant",
             content: reply.message,
             presentation: reply.presentation,
+            time: formatTime(current.lang),
           },
         ]);
         current.onReply(reply);

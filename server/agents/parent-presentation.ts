@@ -263,7 +263,11 @@ const competenciesComponent = (
   filters: PresentationFilters = {},
 ) => {
   const tr = <T>(fr: T, ar: T) => (lang === "fr" ? fr : ar);
-  const items = applyFilters(itemsFor(facts, "read_competency_scores"), filters);
+  const items = applyFilters(itemsFor(facts, "read_competency_scores"), filters)
+    .filter((item) => {
+      const score = number(item.score);
+      return score !== null && score >= 0 && score <= 3;
+    });
   if (!items.length)
     return {
       kind: "empty" as const,

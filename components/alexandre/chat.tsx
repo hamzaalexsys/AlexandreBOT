@@ -12,10 +12,23 @@ import {
   Mic,
   LoaderCircle,
   CircleStop,
+  Settings,
+  Bell,
+  Leaf,
+  User,
+  CheckCheck,
+  Database,
 } from "lucide-react";
 import { FoxAvatar, AlexandreAvatar } from "./avatars";
 import { ParentResponse } from "./parent-response";
 import type { Language, Message, Role } from "@/lib/contracts";
+
+const formatTime = (lang: Language) =>
+  new Intl.DateTimeFormat(lang === "fr" ? "fr-FR" : "ar-MA", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date());
+
 export function Chat({
   role,
   lang,
@@ -23,7 +36,6 @@ export function Chat({
   busy,
   error,
   intro,
-  suggestions,
   onSend,
   onRetry,
   onCancel,
@@ -35,7 +47,7 @@ export function Chat({
   busy: boolean;
   error: string;
   intro: string;
-  suggestions: string[];
+  suggestions?: string[];
   onSend: (message: string, image?: string) => void;
   onRetry: () => void;
   onCancel: () => void;
@@ -49,6 +61,7 @@ export function Chat({
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [voiceError, setVoiceError] = useState("");
+  const [mountTime] = useState(() => formatTime(lang));
   const end = useRef<HTMLDivElement>(null);
   const file = useRef<HTMLInputElement>(null);
   const recorder = useRef<MediaRecorder | null>(null);
@@ -294,21 +307,41 @@ export function Chat({
         <div>
           <strong>{role === "student" ? "Milo" : "Alexandre"}</strong>
           <small>
-            <i />
             {t(
-              role === "student" ? "À ton écoute" : "À votre écoute",
-              "هنا لمساعدتك",
+              role === "student"
+                ? "À ton écoute"
+                : "Assistant scolaire · À votre écoute",
+              role === "student"
+                ? "هنا لمساعدتك"
+                : "مساعد مدرسي · في خدمتكم",
             )}
           </small>
         </div>
-        <button
-          className="icon-button"
-          onClick={listen}
-          title={t("Écouter / arrêter", "استماع / إيقاف")}
-          aria-label={t("Écouter / arrêter", "استماع / إيقاف")}
-        >
-          {reading ? <VolumeX size={19} /> : <Volume2 size={19} />}
-        </button>
+        {role === "parent" ? (
+          <span className="chat-badge">
+            <Leaf size={13} />
+            {t(
+              "Des réponses fiables pour la réussite de votre enfant",
+              "إجابات موثوقة لنجاح طفلكم",
+            )}
+          </span>
+        ) : null}
+        <div className="heading-actions">
+          <span className="ghost-icon" aria-hidden="true">
+            <Settings size={17} />
+          </span>
+          <span className="ghost-icon" aria-hidden="true">
+            <Bell size={17} />
+          </span>
+          <button
+            className="icon-button"
+            onClick={listen}
+            title={t("Écouter / arrêter", "استماع / إيقاف")}
+            aria-label={t("Écouter / arrêter", "استماع / إيقاف")}
+          >
+            {reading ? <VolumeX size={19} /> : <Volume2 size={19} />}
+          </button>
+        </div>
       </div>
       <div
         className="chat-messages"
@@ -316,52 +349,80 @@ export function Chat({
         aria-live="polite"
         aria-relevant="additions"
       >
-        <div className="bubble assistant">{intro}</div>
+        <div className="chat-day">
+          <span>{t("Aujourd’hui", "اليوم")}</span>
+        </div>
+        <div className="message-block assistant">
+          <div className="msg-row">
+            <div className="msg-avatar" aria-hidden="true">
+              {role === "student" ? <FoxAvatar /> : <AlexandreAvatar />}
+            </div>
+            <div className="bubble assistant">{intro}</div>
+          </div>
+          <p className="msg-time">{mountTime}</p>
+        </div>
         {messages.map((m) => (
           <div key={m.id} className={`message-block ${m.role}`}>
-            <div className={`bubble ${m.role}`} dir="auto">
-              {m.content
-                .split(/(\*\*[^*\n]+\*\*)/g)
-                .map((part, index) =>
-                  part.startsWith("**") && part.endsWith("**") ? (
-                    <strong key={index}>{part.slice(2, -2)}</strong>
+            <div className={`msg-row ${m.role}`}>
+              <div className="msg-avatar" aria-hidden="true">
+                {m.role === "assistant" ? (
+                  role === "student" ? (
+                    <FoxAvatar />
                   ) : (
-                    part
-                  ),
+                    <AlexandreAvatar />
+                  )
+                ) : (
+                  <span className="self-icon">
+                    <User size={15} />
+                  </span>
                 )}
+              </div>
+              <div className={`bubble ${m.role}`} dir="auto">
+                {m.content
+                  .split(/(\*\*[^*\n]+\*\*)/g)
+                  .map((part, index) =>
+                    part.startsWith("**") && part.endsWith("**") ? (
+                      <strong key={index}>{part.slice(2, -2)}</strong>
+                    ) : (
+                      part
+                    ),
+                  )}
+              </div>
             </div>
+            <p className={`msg-time ${m.role}`}>
+              {m.time || mountTime}
+              {m.role === "user" ? <CheckCheck size={13} /> : null}
+            </p>
             {role === "parent" && m.role === "assistant" && m.presentation ? (
               <ParentResponse presentation={m.presentation} lang={lang} />
             ) : null}
           </div>
         ))}
         {busy ? (
-          <div className="thinking" role="status">
-            <span />
-            <span />
-            <span />
-            {t(
-              role === "student"
-                ? "Milo prépare sa réponse…"
-                : "Alexandre consulte le dossier…",
-              role === "student"
-                ? "ميلو يجهّز الإجابة…"
-                : "ألكسندر يراجع الملف…",
-            )}
+          <div className="message-block assistant">
+            <div className="msg-row">
+              <div className="msg-avatar" aria-hidden="true">
+                {role === "student" ? <FoxAvatar /> : <AlexandreAvatar />}
+              </div>
+              <div className="thinking" role="status">
+                <span />
+                <span />
+                <span />
+                {t(
+                  role === "student"
+                    ? "Milo prépare sa réponse…"
+                    : "Alexandre consulte les informations…",
+                  role === "student"
+                    ? "ميلو يجهّز الإجابة…"
+                    : "ألكسندر يراجع المعلومات…",
+                )}
+              </div>
+            </div>
+            <p className="msg-time">{mountTime}</p>
           </div>
         ) : null}
         <div ref={end} />
       </div>
-      {!busy && suggestions.length ? (
-        <div className="chat-suggestions">
-          {suggestions.map((s) => (
-            <button key={s} onClick={() => onSend(s)}>
-              <Sparkles size={13} />
-              {s}
-            </button>
-          ))}
-        </div>
-      ) : null}
       {error ? (
         <div className="chat-error" role="alert">
           <p>{error}</p>
@@ -467,6 +528,7 @@ export function Chat({
               </>
             ) : (
               <span className="composer-privacy">
+                <Database size={13} />
                 {t("Base scolaire · Lecture seule", "قاعدة البيانات المدرسية · قراءة فقط")}
               </span>
             )}

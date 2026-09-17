@@ -269,7 +269,7 @@ h3 {
   inset: 0;
   height: 100%;
   opacity: 0;
-  animation: avatar-blink 5.4s ease-in-out infinite;
+  animation: avatar-blink 4s ease-in-out infinite;
 }
 .avatar-float.speaking .avatar-blink img {
   filter: drop-shadow(0 0 14px rgba(240, 155, 85, 0.5));

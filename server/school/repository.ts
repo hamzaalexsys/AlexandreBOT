@@ -212,9 +212,10 @@ const liveRepository: SchoolRepository = {
         ...common,
         scaleNote:
           lang === "fr"
-            ? "Chaque compétence est évaluée sur une échelle de 0 (non maîtrisée) à 3 (maîtrisée) lors d’un examen."
-            : "كل كفاءة يتم تقييمها على سلم من 0 (غير مكتسبة) إلى 3 (مكتسبة) خلال اختبار.",
+            ? "Chaque compétence est évaluée sur une échelle de 0 (non maîtrisée) à 3 (maîtrisée) lors d’un examen. L’année scolaire est déduite de la date de l’examen (septembre à août)."
+            : "كل كفاءة يتم تقييمها على سلم من 0 (غير مكتسبة) إلى 3 (مكتسبة) خلال اختبار. السنة الدراسية مستنتجة من تاريخ الاختبار (من شتنبر إلى غشت).",
         items: result.items.map((item) => ({
+          schoolYear: text(item.schoolYear),
           subject: text(item.subject),
           competency: text(item.competency),
           code: text(item.code),

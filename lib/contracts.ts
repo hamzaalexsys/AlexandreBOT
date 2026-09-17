@@ -188,5 +188,6 @@ export type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  time?: string;
   presentation?: ParentPresentation | null;
 };
