@@ -24,24 +24,27 @@ const plain = (value: string) =>
 
 const compact = (value: string) => plain(value).replace(/[^a-z0-9\u0600-\u06ff]/gu, "");
 
-const multiYearIntent = (q: string) =>
-  /(evolution|evolu|compar|progress|au cours des annees|au fil des annees|toutes.{0,20}matieres|عبر.{0,12}السنوات|تطور|مقارنة|جميع.{0,12}المواد)/.test(q);
+const schoolYears = (value: string) =>
+  plain(value).match(/\b20\d{2}\s*\/\s*20\d{2}\b/g) ?? [];
 
-const hasUnsupportedResultCoverageClaim = (value: string) =>
-  plain(value)
-    .split(/(?<=[.!?؟;])\s*|\n+/u)
-    .some((sentence) => {
-      const unsupported =
-        /(?:(aucun|pas de|absence de|non.{0,20}enregistr).{0,35}(resultat|note|moyenne).{0,120}(2025\/2026|2026\/2027)|(2025\/2026|2026\/2027).{0,120}(aucun|pas de|absence de|non.{0,20}enregistr).{0,35}(resultat|note|moyenne))/.test(
-          sentence,
-        );
-      if (!unsupported) return false;
-      const explicitlyQualified =
-        /(ne (?:peut|pouvons|permet|signifie).{0,70}(dire|affirmer|conclure|deduire)|impossible.{0,45}(dire|affirmer|conclure|deduire)|n.?ont.{0,35}pas ete (interroge|consulte)|n.?avons.{0,35}pas (interroge|consulte))/.test(
-          sentence,
-        );
-      return !explicitlyQualified;
-    });
+const asksForUnavailableYear = (question: string, currentSchoolYear: string) => {
+  const q = plain(question);
+  const current = plain(currentSchoolYear).replace(/\s/g, "");
+  const explicitOtherYear = schoolYears(question).some(
+    (year) => year.replace(/\s/g, "") !== current,
+  );
+  return (
+    explicitOtherYear ||
+    /(annee derniere|annee passee|annee precedente|l.?an dernier|السنة الماضية|السنة السابقة)/.test(
+      q,
+    )
+  );
+};
+
+const mentionsUnavailableSchoolYear = (value: string, currentSchoolYear: string) => {
+  const current = plain(currentSchoolYear).replace(/\s/g, "");
+  return schoolYears(value).some((year) => year.replace(/\s/g, "") !== current);
+};
 
 const dataFor = (facts: ParentFact[], tool: string) =>
   record(facts.find((fact) => fact.tool === tool)?.data);
@@ -108,6 +111,13 @@ export function parentFactDigest(facts: ParentFact[], question = "") {
   const activities = itemsFor(facts, "read_student_activities");
 
   const q = plain(question);
+  const currentSchoolYear = text(overview.schoolYear);
+  if (asksForUnavailableYear(q, currentSchoolYear))
+    return [
+      `CURRENT CHILD | ${itemLine([overview.child, overview.className, currentSchoolYear, overview.age ? `${overview.age} years` : ""])}`,
+      `ACCESS SCOPE | Only the current school year ${currentSchoolYear} is authorised and available. Previous and future school years were not retrieved.`,
+      "The parent asks about an unavailable school year. State that only the current school year is available, name it, and do not provide marks, results, a class, or any detail from another year.",
+    ].join("\n");
   const markDetailsFocus =
     /(note|notes).{0,30}(detail|detailler|detaillees)|detail.{0,25}(note|notes)|chaque note|toutes les notes|كل نقطة|تفاصيل.{0,10}نقط|نقط.{0,15}تفاصيل/.test(q);
   const focused = /(devoir|travail.{0,20}(demain|maison)|واجب|غد)/.test(q)
@@ -128,7 +138,7 @@ export function parentFactDigest(facts: ParentFact[], question = "") {
                   ? "journey"
                   : markDetailsFocus
                   ? "markDetails"
-                  : !multiYearIntent(q) &&
+                  :
                       /(derniere|dernieres|recent).{0,35}note|note.{0,35}(derniere|annee derniere)|آخر.{0,20}(نقط|علام)|نقط.{0,20}السنة الماضية/.test(q)
                     ? "latestMarks"
                     : null;
@@ -178,12 +188,6 @@ export function parentFactDigest(facts: ParentFact[], question = "") {
       ]),
     )
     .join(" ; ");
-  const earlierYearsLine = [...markGroups.entries()]
-    .filter(([key]) => !key.startsWith(`${latestDetailYear}|`))
-    .map(([key, items]) =>
-      itemLine([key.split("|")[0], key.split("|")[1], ...items.map((item) => `${item.rawScore}/${item.scale}`)]),
-    )
-    .join(" ; ");
   const lines = [
     `OBSERVED AT | ${text(overview.observedAt)}`,
     `CURRENT CHILD | ${itemLine([overview.child, overview.className, overview.schoolYear, overview.age ? `${overview.age} years` : ""])}`,
@@ -199,9 +203,9 @@ export function parentFactDigest(facts: ParentFact[], question = "") {
     lines.push(`LATEST VALID MARK PER SUBJECT (supporting context for mark-evaluation follow-ups) | ${latestMarks.length ? latestMarks.map((item) => itemLine([item.schoolYear, item.subject, `${item.rawScore}/${item.scale}`, item.examDate, item.exam])).join(" ; ") : "NONE"}`);
   }
   if (focused === "latestMarks")
-    lines.push(`LATEST VALID MARK PER SUBJECT IN MOST RECENT COMPLETED YEAR | ${latestMarks.length ? latestMarks.map((item) => itemLine([item.schoolYear, item.subject, `${item.rawScore}/${item.scale}`, item.examDate, item.exam])).join(" ; ") : "NONE"}`);
+    lines.push(`LATEST VALID MARK PER SUBJECT IN CURRENT SCHOOL YEAR | ${latestMarks.length ? latestMarks.map((item) => itemLine([item.schoolYear, item.subject, `${item.rawScore}/${item.scale}`, item.examDate, item.exam])).join(" ; ") : "NONE"}`);
   if (focused === "markDetails")
-    lines.push(`EVERY VALID INDIVIDUAL MARK ON RECORD | ${markDetails.length ? markDetails.map((item) => itemLine([item.schoolYear, item.term, item.subject, item.exam, item.examDate, `${item.rawScore}/${item.scale}`, `score20=${item.score20}`])).join(" ; ") : "NONE"}`);
+    lines.push(`EVERY VALID INDIVIDUAL MARK IN CURRENT SCHOOL YEAR | ${markDetails.length ? markDetails.map((item) => itemLine([item.schoolYear, item.term, item.subject, item.exam, item.examDate, `${item.rawScore}/${item.scale}`, `score20=${item.score20}`])).join(" ; ") : "NONE"}`);
   if (focused === "competencies")
     lines.push(`COMPETENCY MASTERY SCORES 0..3 (WEAKEST FIRST, DEDUPLICATED) | ${competencyRows.length ? competencyRows.map((item) => itemLine([`score=${item.score}/3`, item.schoolYear, item.subject, text(item.examDate).slice(0, 10), item.competency])).join(" ; ") : "NONE"}`);
   if (focused === "teachers")
@@ -209,7 +213,7 @@ export function parentFactDigest(facts: ParentFact[], question = "") {
   if (focused === "activities")
     lines.push(`STUDENT ACTIVITIES | ${activities.length ? activities.map((item) => itemLine([item.activityDate, item.activityType, item.activity, item.className])).join(" ; ") : "NONE"}`);
   if (focused === "journey")
-    lines.push(`SCHOOL JOURNEY YEAR/CLASS PAIRS | ${journey.length ? journey.map((item) => itemLine([item.schoolYear, item.className, item.levelName, `current=${String(item.isCurrent)}`])).join(" ; ") : "NONE"}`);
+    lines.push(`CURRENT SCHOOL YEAR/CLASS | ${journey.length ? journey.map((item) => itemLine([item.schoolYear, item.className, item.levelName, `current=${String(item.isCurrent)}`])).join(" ; ") : "NONE"}`);
   if (focused)
     return [
       ...lines,
@@ -218,7 +222,7 @@ export function parentFactDigest(facts: ParentFact[], question = "") {
         ? "The competency evaluations listed above ARE the available data; never claim that no competency evaluations are recorded. Weakest scores are listed first."
         : "",
       focused === "journey"
-        ? "The journey pairs above are the class history; keep each year paired with its recorded class."
+        ? "The class assignment above is for the current school year only."
         : "",
       focused === "exams" && !exams.length
         ? "No class exam rows exist. When the follow-up asks which evaluation produced a mark, answer from the LATEST VALID MARK line above and quote its exam label and date."
@@ -229,24 +233,23 @@ export function parentFactDigest(facts: ParentFact[], question = "") {
 
   return [
     ...lines,
-    `JOURNEY YEAR/CLASS PAIRS | ${journey.map((item) => itemLine([item.schoolYear, item.className])).join(" ; ")}`,
+    `CURRENT YEAR/CLASS | ${journey.map((item) => itemLine([item.schoolYear, item.className])).join(" ; ")}`,
     `INDICATIVE YEAR RESULTS /20 | ${years.map((item) => itemLine([item.schoolYear, item.average20, `${item.noteCount} valid notes`, `${item.discardedCount} discarded`])).join(" ; ")}`,
-    "RESULT QUERY COVERAGE | 2023/2024 and 2024/2025 only. Missing later years were not queried and must not be described as having no results.",
+    `RESULT QUERY COVERAGE | ${currentSchoolYear} only. Previous and future school years were not retrieved and must not be described.`,
     `SUBJECT RESULTS /20 | ${subjects.map((item) => itemLine([item.schoolYear, item.subject, item.average20, `${item.noteCount} notes`])).join(" ; ")}`,
     `SEMESTER RESULTS /20 | ${terms.map((item) => itemLine([item.schoolYear, item.term, item.average20, `${item.noteCount} notes`])).join(" ; ")}`,
     `CURRENT ATTENDANCE | ${attendance.length ? attendance.map((item) => itemLine([item.dateFrom, item.subject, `justified=${String(item.justified)}`, `reason=${text(item.reason) || "NOT RECORDED"}`])).join(" ; ") : "NO RECORDED ABSENCE"}`,
     `CURRENT ASSIDUITY OBSERVATIONS | ${assiduity.length ? assiduity.map((item) => itemLine([item.date, item.subject, item.label, item.comment || "NO COMMENT"])).join(" ; ") : "NONE"}`,
     `CURRENT CLASS EXAMS | ${exams.length ? exams.map((item) => itemLine([item.examDate, item.subject, item.exam, item.examType])).join(" ; ") : "NONE"}`,
-    `LATEST VALID MARK PER SUBJECT IN MOST RECENT COMPLETED YEAR | ${latestMarks.length ? latestMarks.map((item) => itemLine([item.schoolYear, item.subject, `${item.rawScore}/${item.scale}`, item.examDate, item.exam])).join(" ; ") : "NONE"}`,
-    `LATEST COMPLETED YEAR (${latestDetailYear}) INDIVIDUAL MARKS | ${markDetails.length ? latestYearLine : "NONE"}`,
-    `EARLIER YEARS INDIVIDUAL MARKS BY SUBJECT | ${markDetails.length ? earlierYearsLine : "NONE"} (each value is rawScore/scale; full exam labels are available from read_mark_details when asked for details)`,
+    `LATEST VALID MARK PER SUBJECT IN CURRENT SCHOOL YEAR | ${latestMarks.length ? latestMarks.map((item) => itemLine([item.schoolYear, item.subject, `${item.rawScore}/${item.scale}`, item.examDate, item.exam])).join(" ; ") : "NONE"}`,
+    `CURRENT SCHOOL YEAR (${currentSchoolYear}) INDIVIDUAL MARKS | ${markDetails.length ? latestYearLine : "NONE"}`,
     `COMPETENCY MASTERY SUMMARY 0..3 | ${competencies.length ? competencySummary : "NONE"}`,
     `CLASS TEACHERS | ${teachers.length ? [...new Set(teachers.map((item) => itemLine([item.subject, [item.firstName, item.lastName].filter(Boolean).join(" ")])))].join(" ; ") : "NONE"}`,
     `STUDENT ACTIVITIES | ${activities.length ? activities.map((item) => itemLine([item.activityDate, item.activityType, item.activity])).join(" ; ") : "NONE"}`,
     `CURRENT LEARNING RECORDS | ${learning.length ? learning.map((item) => itemLine([item.date, item.subject, item.skill, item.status])).join(" ; ") : "NONE"}`,
     `CURRENT SCHOOL MESSAGES | ${messages.length ? messages.map((item) => itemLine([item.date, item.title, item.text])).join(" ; ") : "NONE"}`,
     `CURRENT HOMEWORK | ${homework.length ? homework.map((item) => itemLine([item.dueDate, item.description])).join(" ; ") : "NONE"}`,
-    "Never change a year/class pair. Never infer a cause. Results above are indicative calculations, not official report-card averages.",
+    `Only ${currentSchoolYear} is authorised. Never mention or infer another school year. Never infer a cause. Results above are indicative calculations, not official report-card averages.`,
   ].join("\n");
 }
 
@@ -257,11 +260,8 @@ export class ParentGroundingError extends Error {
 }
 
 export function sanitizeParentAnswer(answer: string, lang: "fr" | "ar" = "fr") {
-  const sentences = answer.split(/(?<=[.!?؟;])\s+|\n+/u);
-  const kept = sentences.filter(
-    (sentence) => !hasUnsupportedResultCoverageClaim(sentence),
-  );
-  const sanitized = (kept.join(" ").trim() || answer)
+  const sanitized = answer
+    .trim()
     .replace(/\(?\bOBSERVED AT\b\)?/giu, "")
     .replace(
       /\bNOT RECORDED\b/giu,
@@ -303,15 +303,33 @@ export function parentGroundingIssues(
   const assiduity = itemsFor(facts, "read_assiduity");
   const homework = itemsFor(facts, "read_homework");
   const latestMarks = itemsFor(facts, "read_latest_marks");
+  const currentSchoolYear = text(overview.schoolYear);
+  const unavailableYearRequest = asksForUnavailableYear(q, currentSchoolYear);
 
-  if (hasUnsupportedResultCoverageClaim(a))
-    issues.push(
-      "do not claim that 2025/2026 or 2026/2027 has no results; those years are outside the result-query coverage",
-    );
+  if (mentionsUnavailableSchoolYear(answer, currentSchoolYear)) {
+    const denial = /(pas acces|n.?ai pas acces|ne peux pas|ne pouvons pas|non disponible|indisponible|seul|uniquement|لا (?:أستطيع|يمكن|تتوفر)|فقط)/.test(a);
+    if (!unavailableYearRequest || !denial)
+      issues.push(`do not describe a school year other than ${currentSchoolYear}`);
+  }
+
+  if (unavailableYearRequest) {
+    const withoutSchoolYears = a.replace(/\b20\d{2}\s*\/\s*20\d{2}\b/g, "");
+    if (/\b\d+(?:[.,]\d+)?\b/.test(withoutSchoolYears))
+      issues.push("do not provide any mark or numeric result for an unavailable school year");
+    if (!a.includes(plain(currentSchoolYear)))
+      issues.push(`state that only the current school year ${currentSchoolYear} is available`);
+    if (
+      !/(seul|seule|uniquement|limite|accessible|peux.{0,35}que|فقط).{0,60}(annee|20\d{2}\s*\/\s*20\d{2})|(annee|20\d{2}\s*\/\s*20\d{2}).{0,60}(seul|seule|uniquement|limite|accessible|فقط)/.test(
+        a,
+      )
+    )
+      issues.push("explain that previous school years are unavailable before answering");
+  }
 
   const comparison =
-    /(compar|evolution.*annee|entre.*2023\/2024.*2024\/2025)/.test(q) ||
-    (q.includes("2023/2024") && q.includes("2024/2025"));
+    !unavailableYearRequest &&
+    (/(compar|evolution.*annee)/.test(q) ||
+      schoolYears(q).length > 1);
   if (comparison) {
     for (const item of years) {
       const schoolYear = text(item.schoolYear);
@@ -344,7 +362,7 @@ export function parentGroundingIssues(
     }
   }
 
-  if (/(semestre|trimestre|periode)/.test(q)) {
+  if (!unavailableYearRequest && /(semestre|trimestre|periode)/.test(q)) {
     for (const item of terms)
       if (!mentionsScore(a, item.average20))
         issues.push(
@@ -352,7 +370,7 @@ export function parentGroundingIssues(
         );
   }
 
-  if (/(progress|plus progresse|matiere.*evolu)/.test(q)) {
+  if (!unavailableYearRequest && /(progress|plus progresse|matiere.*evolu)/.test(q)) {
     const maths = subjects.filter((item) =>
       plain(text(item.subject)).includes("mathematique"),
     );
@@ -363,7 +381,7 @@ export function parentGroundingIssues(
         );
   }
 
-  if (/francais/.test(q) && /(resultat|attention|note|moyenne)/.test(q)) {
+  if (!unavailableYearRequest && /francais/.test(q) && /(resultat|attention|note|moyenne)/.test(q)) {
     const french = subjects.filter((item) =>
       plain(text(item.subject)).includes("francais"),
     );
@@ -392,7 +410,7 @@ export function parentGroundingIssues(
   }
 
   if (
-    !multiYearIntent(q) &&
+    !unavailableYearRequest &&
     /(derniere|dernieres|recent).{0,35}note|note.{0,35}(derniere|annee derniere)/.test(q)
   ) {
     for (const item of latestMarks) {

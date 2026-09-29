@@ -88,6 +88,10 @@ export function useConversation({  role,
         if (!response.ok) {
           if (response.status === 401) throw new Error("SESSION");
           if (response.status === 429) throw new Error("LIMIT");
+          if (response.status === 503 && current.role === "parent") {
+            const failure = (await response.json().catch(() => ({}))) as { error?: unknown };
+            if (failure.error === "SCHOOL_UNAVAILABLE") throw new Error("SCHOOL");
+          }
           throw new Error("PROVIDER");
         }
         const raw = await response.json();
@@ -132,12 +136,16 @@ export function useConversation({  role,
             ? "Ta session a expiré. Reviens à l’accueil pour te reconnecter."
             : reason === "LIMIT"
               ? "Une petite pause : réessaie dans une minute."
+              : reason === "SCHOOL"
+                ? "Les informations scolaires sont momentanément indisponibles. Réessaie dans un instant."
               : "La réponse n’est pas arrivée. Tu peux réessayer, le tableau reste disponible.";
         const ar =
           reason === "SESSION"
             ? "انتهت الجلسة. عد إلى الصفحة الرئيسية للدخول مجدداً."
             : reason === "LIMIT"
               ? "استراحة قصيرة: حاول بعد دقيقة."
+              : reason === "SCHOOL"
+                ? "المعلومات المدرسية غير متاحة حالياً. حاول مجدداً بعد قليل."
               : "لم تصل الإجابة. يمكنك المحاولة مجدداً، واللوحة ما زالت متاحة.";
         setError(current.lang === "fr" ? fr : ar);
       } finally {

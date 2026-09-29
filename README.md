@@ -6,23 +6,32 @@ Plateforme locale bilingue du Groupe scolaire Alexandre pour les 6–12 ans. **M
 
 Node.js 22.13 ou supérieur est requis. Les fichiers `.env` sont locaux et ignorés par Git.
 
-Dans un premier terminal :
+Installer les dépendances une fois :
 
 ```powershell
 npm.cmd --prefix services/school-gateway ci
-npm.cmd run gateway
+npm.cmd ci
 ```
 
-Dans un second terminal :
+Puis lancer le pilote dans un terminal :
 
 ```powershell
-npm.cmd ci
 npm.cmd run dev
 ```
 
-Ouvrir `http://localhost:5173`. Aucun déploiement n’est nécessaire ni prévu pour ce pilote.
+`npm run dev` démarre la passerelle scolaire locale si elle ne tourne pas déjà, puis le site. Ouvrir `http://localhost:5173`. Aucun déploiement n’est nécessaire ni prévu pour ce pilote. Pour utiliser la passerelle seule, `npm run gateway` reste disponible.
 
 La configuration web attend `SESSION_SECRET`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL=deepseek/deepseek-v4.1-flash`, `SCHOOL_GATEWAY_URL`, `SCHOOL_GATEWAY_TOKEN` et `PILOT_ENROLLMENT_ID`. La passerelle attend la connexion SQL, le même jeton de service et un mapping serveur `pilot-parent` vers le parent autorisé. Les secrets ne sont jamais exposés au navigateur.
+
+## Conversation vocale
+
+Cliquer **Dicter**, parler, puis **Stop · envoyer** : la question est envoyée automatiquement, sans clic supplémentaire. Les phrases sont transcrites pendant les pauses ; au Stop, seule la fin encore en cours attend sa transcription. L’aperçu apparaît pendant la dictée. Une dictée dure au maximum 60 secondes. En cas d’échec réseau, **Réessayer l’envoi** réutilise les portions échouées gardées en mémoire ; aucun message incomplet n’est envoyé.
+
+**Entendre** active une voix de synthèse et la lecture automatique des réponses suivantes. Cliquer à nouveau désactive le son. Le micro coupe la lecture en cours pour éviter de retranscrire l’assistant. La voix arrive en flux audio, sans attendre la génération complète. Une nouvelle conversation ou un changement de langue arrête les requêtes audio en cours.
+
+Les valeurs par défaut sont `openai/gpt-4o-transcribe` pour la reconnaissance et `x-ai/grok-voice-tts-1.0`, voix `rex`, pour la synthèse française/arabe. Elles utilisent la clé OpenRouter existante. `OPENROUTER_VOICE_VOCABULARY` peut ajouter les prénoms et termes propres à l’école au contexte de reconnaissance. Ce sont des indications, jamais une substitution forcée dans le texte. Le lecteur attend du PCM mono 24 kHz ; un autre modèle TTS doit prendre en charge ce format. Les valeurs configurables sont documentées dans `.env.example`.
+
+Le micro nécessite un navigateur récent avec AudioWorklet, sur localhost ou HTTPS. La reconnaissance des accents et du bruit ambiant reste à vérifier sur le micro de présentation. La latence réseau et le temps de réponse de l’agent scolaire s’ajoutent à la transcription.
 
 ## Parcours à présenter
 
@@ -32,7 +41,7 @@ La configuration web attend `SESSION_SECRET`, `OPENROUTER_API_KEY`, `OPENROUTER_
 4. Demander un dessin libre animé, toucher une figure et dessiner au doigt. Dès qu’un trait existe, la question suivante transmet automatiquement une capture du tableau à Milo ; **Expliquer mon dessin** permet aussi de l’interroger directement. Une équation concrète est transmise au solveur vérifié. Une photo d’exercice peut être expliquée par le modèle vision.
 5. Passer en arabe : l’interface devient RTL et les nouvelles réponses sont en arabe.
 6. Changer d’espace et choisir **Je suis parent**. Le clic reste dans l’espace Alexandre.
-7. Consulter la fiche réelle d’Aamar en lecture seule, puis demander une comparaison 2023/2024–2024/2025, son parcours, son absence actuelle ou des pistes pour préparer un échange avec l’enseignant. La fiche de gauche suit le sujet de la conversation.
+7. Consulter la fiche reelle d'Aamar en lecture seule, puis demander ses resultats, sa classe ou son absence pour l'annee scolaire en cours. Les annees precedentes ne sont pas accessibles. La fiche de gauche suit le sujet de la conversation.
 
 Le login est volontairement faux pour la présentation locale. La session parent contient un périmètre pilote signé côté serveur ; elle ne prend aucun identifiant dans le chat ou l’URL.
 
@@ -48,6 +57,7 @@ Le compte fourni pour ce pilote possède des capacités administratives. Le drap
 npx.cmd tsc --noEmit
 npm.cmd run lint
 npm.cmd run check:core
+npm.cmd run check:voice
 npm.cmd run gateway:test
 npm.cmd run build
 npm.cmd run check:api
@@ -56,9 +66,13 @@ npm.cmd run check:parent
 npm.cmd run check:vision
 npm.cmd run check:drawing
 npm.cmd run check:labs
+npm.cmd run check:voice:live
+npm.cmd run check:voice:live -- --parent
 ```
 
-Les six derniers contrôles utilisent de vrais appels OpenRouter et, pour Alexandre, de vraies lectures SQL. `check:parent` pose 15 questions de présentation et compare les réponses aux faits Azure attendus. `check:drawing` vérifie qu’une équation manuscrite est lue, résolue sur la page courante et ensuite décrite sans mutation. `check:labs` force les trois nouveaux parcours d’outil, une équation vérifiée, une demande arabe et une conversation ordinaire qui ne doit appeler aucun outil.
+`check:voice` vérifie hors réseau la capture, la fin d’enregistrement, l’ordre des phrases, les annulations, les reprises, le flux PCM et les protections des routes. `check:voice:live` utilise de vrais appels OpenRouter : synthèse puis transcription en français/arabe avec Fahd et Hamza. L’option `--parent` vérifie aussi la question transcrite → réponse scolaire → premiers octets de la voix.
+
+Les contrôles de conversation utilisent de vrais appels OpenRouter et, pour Alexandre, de vraies lectures SQL. `check:parent` pose 15 questions de présentation et compare les réponses aux faits Azure attendus. `check:drawing` vérifie qu’une équation manuscrite est lue, résolue sur la page courante et ensuite décrite sans mutation. `check:labs` force les trois nouveaux parcours d’outil, une équation vérifiée, une demande arabe et une conversation ordinaire qui ne doit appeler aucun outil.
 
 ## Documentation
 

@@ -19,23 +19,23 @@ const descriptions: Record<string, string> = {
   read_exams:
     "Read recent and upcoming exams for the authorised child's current class and school year.",
   read_latest_marks:
-    "Read the latest valid exam mark in every subject from the most recent completed school year.",
+    "Read the latest valid exam mark in every subject for the current school year only.",
   read_mark_details:
-    "Read every valid individual exam mark (exam, date, semester, subject, score and scale) across the school years on record, newest years first.",
+    "Read every valid individual exam mark (exam, date, semester, subject, score and scale) for the current school year only.",
   read_competency_scores:
     "Read competency mastery scores (0 not mastered to 3 mastered) per targeted competency, subject and exam date.",
   read_class_teachers:
     "Read the teachers of the child's current class by subject (names only, no contact details).",
   read_student_activities:
-    "Read extracurricular activities the child is enrolled in (type, description, date, class).",
+    "Read extracurricular activities the child is enrolled in during the current school year (type, description, date, class).",
   read_school_journey:
-    "Read the authorised child's class-by-class school journey across available years.",
+    "Read the authorised child's current class assignment for the current school year only.",
   read_year_results:
-    "Read validated exam-note summaries for 2023/2024 and 2024/2025, normalized to 20 with sample sizes. These are indicative calculations, not official report-card averages.",
+    "Read the current school year's validated exam-note summary, normalized to 20 with its sample size. This is an indicative calculation, not an official report-card average.",
   read_subject_results:
-    "Read validated exam-note averages by subject and school year, normalized to 20 with sample sizes.",
+    "Read validated exam-note averages by subject for the current school year, normalized to 20 with sample sizes.",
   read_term_results:
-    "Read validated exam-note averages by semester and school year, normalized to 20 with sample sizes.",
+    "Read validated exam-note averages by semester for the current school year, normalized to 20 with sample sizes.",
   get_teaching_guidance:
     "Read age-appropriate teaching principles for ages 6 to 12.",
 };

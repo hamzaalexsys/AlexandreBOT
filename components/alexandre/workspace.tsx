@@ -21,6 +21,7 @@ export function Workspace(props: Props) {
 function ParentWorkspace({ lang, setLang, onExit }: Props) {
   const t = (fr: string, ar: string) => (lang === "fr" ? fr : ar);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [conversationVersion, setConversationVersion] = useState(0);
   const onReply = useCallback(
     (reply: Reply) => setSuggestions(reply.suggestions),
     [],
@@ -83,6 +84,7 @@ function ParentWorkspace({ lang, setLang, onExit }: Props) {
         <div className="parent-chat-layout">
           <div className="conversation-column">
             <Chat
+              key={`${lang}-${conversationVersion}`}
               role="parent"
               lang={lang}
               messages={chat.messages}
@@ -114,6 +116,7 @@ function ParentWorkspace({ lang, setLang, onExit }: Props) {
               disabled={chat.busy}
               onClick={() => {
                 chat.reset();
+                setConversationVersion(version => version + 1);
                 setSuggestions([]);
               }}
             >

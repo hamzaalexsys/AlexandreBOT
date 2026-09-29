@@ -58,6 +58,7 @@ export function StudentWorkspace({
     value: number;
   } | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [conversationVersion, setConversationVersion] = useState(0);
   const [newDrawing, setNewDrawing] = useState(false);
   const boardRef = useRef<BoardHandle>(null);
   const sendLock = useRef(false);
@@ -593,6 +594,7 @@ export function StudentWorkspace({
               </label>
             </div>
             <Chat
+              key={`${lang}-${conversationVersion}`}
               role="student"
               lang={lang}
               messages={chat.messages}
@@ -640,6 +642,7 @@ export function StudentWorkspace({
               disabled={chat.busy}
               onClick={() => {
                 chat.reset();
+                setConversationVersion(version => version + 1);
                 setSuggestions([]);
               }}
             >

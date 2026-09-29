@@ -1,12 +1,13 @@
 import { env } from "cloudflare:workers";
 import { getSession, sameOrigin } from "@/server/auth/session";
+import { TRANSCRIPTION_MODEL, transcriptionOptions } from "@/server/voice/config";
 
 const MAX_AUDIO_BYTES = 4 * 1024 * 1024;
 const allowedFormats = new Map([
   ["audio/webm", "webm"],
   ["audio/ogg", "ogg"],
   ["audio/mpeg", "mp3"],
-  ["audio/mp4", "mp4"],
+  ["audio/mp4", "m4a"],
   ["audio/wav", "wav"],
   ["audio/x-wav", "wav"],
 ]);
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
     const form = await req.formData();
     const audio = form.get("audio");
     const language = form.get("lang") === "ar" ? "ar" : "fr";
+    const context = typeof form.get("context") === "string" ? String(form.get("context")).slice(-600) : "";
     if (!(audio instanceof File) || audio.size === 0 || audio.size > MAX_AUDIO_BYTES)
       return Response.json({ error: "INVALID_AUDIO" }, { status: 400, headers });
     const mime = audio.type.split(";")[0].toLowerCase();
@@ -43,7 +45,9 @@ export async function POST(req: Request) {
     const config = env as Record<string, string | undefined>;
     if (!config.OPENROUTER_API_KEY)
       throw new Error("AI_NOT_CONFIGURED");
-    const timeout = AbortSignal.timeout(55_000);
+    const started = performance.now();
+    const model = config.OPENROUTER_TRANSCRIPTION_MODEL || TRANSCRIPTION_MODEL;
+    const timeout = AbortSignal.timeout(12_000);
     const signal = req.signal ? AbortSignal.any([req.signal, timeout]) : timeout;
     const response = await fetch("https://openrouter.ai/api/v1/audio/transcriptions", {
       method: "POST",
@@ -54,15 +58,14 @@ export async function POST(req: Request) {
         "X-Title": "AlexandreBOT",
       },
       body: JSON.stringify({
-        model:
-          config.OPENROUTER_TRANSCRIPTION_MODEL ||
-          "openai/whisper-large-v3-turbo",
+        model,
         input_audio: {
           data: base64(await audio.arrayBuffer()),
           format,
         },
         language,
         temperature: 0,
+        provider: transcriptionOptions(language, context, config.OPENROUTER_VOICE_VOCABULARY || ""),
       }),
     });
     if (!response.ok) {
@@ -71,16 +74,18 @@ export async function POST(req: Request) {
     }
     const result = (await response.json()) as { text?: unknown; usage?: { seconds?: unknown } };
     const transcript = typeof result.text === "string" ? result.text.trim() : "";
-    if (!transcript) throw new Error("AI_EMPTY");
+    // Silence can legitimately return an empty transcript; don't invent text.
+    if (transcript.length > 2400)
+      return Response.json({ error: "TRANSCRIPT_TOO_LONG" }, { status: 422, headers });
+    const durationMs = Math.round(performance.now() - started);
     return Response.json(
       {
-        text: transcript.slice(0, 2400),
+        text: transcript,
         source: "openrouter",
-        model:
-          config.OPENROUTER_TRANSCRIPTION_MODEL ||
-          "openai/whisper-large-v3-turbo",
+        model,
+        durationMs,
       },
-      { headers },
+      { headers: { ...headers, "Server-Timing": `transcription;dur=${durationMs}` } },
     );
   } catch (error) {
     if (req.signal.aborted)

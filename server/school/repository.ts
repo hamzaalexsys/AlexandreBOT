@@ -179,6 +179,7 @@ const liveRepository: SchoolRepository = {
     if (section === "latestMarks")
       return {
         ...common,
+        scope: lang === "fr" ? "Annee scolaire en cours uniquement." : "Current school year only.",
         items: result.items.map((item) => ({
           schoolYear: text(item.schoolYear),
           subject: text(item.subject),
@@ -265,9 +266,9 @@ const liveRepository: SchoolRepository = {
         scale: 20,
         method:
           lang === "fr"
-            ? "Lecture limitée à 2023/2024 et 2024/2025. Moyennes indicatives calculées à partir des notes d’examens valides et ramenées sur 20 ; ce ne sont pas des moyennes officielles de bulletin. L’absence d’une autre année dans cette lecture ne signifie pas qu’elle ne possède aucun résultat."
-            : "القراءة محدودة بالسنتين 2023/2024 و2024/2025. متوسطات إرشادية محسوبة من نتائج الاختبارات الصالحة ومحولة إلى 20؛ وليست معدلات رسمية لكشف النقط. غياب سنة أخرى من هذه القراءة لا يعني عدم وجود نتائج لها.",
-        coveredYears: ["2023/2024", "2024/2025"],
+            ? "Lecture limitee a l'annee scolaire en cours. Moyennes indicatives calculees a partir des notes d'examens valides et ramenees sur 20 ; ce ne sont pas des moyennes officielles de bulletin."
+            : "Current school-year results only. Values are indicative calculations on a 20-point scale, not official report-card averages.",
+        coveredYears: [...new Set(result.items.map((item) => text(item.schoolYear)).filter(Boolean))],
         items: result.items.map((item) => ({
           schoolYear: text(item.schoolYear),
           noteCount: number(item.noteCount),

@@ -131,7 +131,7 @@ Sources livrées : `school-schema.json`, `school-relations.json`, `school-view-d
 | Messages direction | `VConsultation_MessageDirection` | `EtudiantNiveauAnnee_ID` et relation parent |
 | Devoirs de classe | `Devoirs` | Classe de l’inscription autorisée de l’année en cours |
 | Parcours annuel | `Etudiant_Niveau_Annee`, `Etudiant_Classe`, `Annee`, `Niveau`, `Classe` | Élève dérivé de l’inscription autorisée et relation parent actuelle |
-| Résultats annuels, matières, semestres | `V_Consultation_ExamenNote` | Élève dérivé de l’inscription autorisée, années 2023/2024 et 2024/2025, notes valides ramenées sur 20 |
+| Resultats annuels, matieres, semestres | `V_Consultation_ExamenNote` | Inscription autorisee de l'annee en cours uniquement, notes valides ramenees sur 20 |
 
 **Jointure importante vérifiée dans les vues :** le champ `Etudiant_Parent.Etudiant_ID` joint en réalité `Etudiant_Niveau_Annee.EtudiantNiveauAnnee_ID`. Son nom est trompeur : il ne faut pas le joindre directement à l’identifiant de la table `Etudiant`. La passerelle utilise donc l’identité d’inscription annuelle exposée par la vue parent.
 

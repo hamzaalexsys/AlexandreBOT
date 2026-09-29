@@ -82,7 +82,7 @@ export function createSchoolGatewayClient(config: {
         },
         cache: "no-store",
         signal: AbortSignal.timeout(12000),
-      });
+      }).catch(() => { throw new Error("SCHOOL_UNAVAILABLE"); });
       if (!response.ok)
         throw new Error(
           response.status === 403 ? "SCHOOL_FORBIDDEN" : "SCHOOL_UNAVAILABLE",

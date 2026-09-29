@@ -7,10 +7,12 @@
   },
   "scripts": {
     "install:ci": "node scripts/install-ci.mjs",
-    "dev": "vinext dev --port 5173",
+    "dev": "node scripts/dev.mjs",
     "gateway": "npm --prefix services/school-gateway start",
     "gateway:test": "npm --prefix services/school-gateway test",
     "check:core": "node scripts/check-core.mjs",
+    "check:voice": "node scripts/check-voice.mjs",
+    "check:voice:live": "node scripts/check-voice-live.mjs",
     "check:api": "node scripts/check-api.mjs",
     "check:board": "node scripts/check-board-request.mjs",
     "check:parent": "node scripts/check-parent-live.mjs",

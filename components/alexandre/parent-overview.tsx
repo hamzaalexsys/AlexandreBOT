@@ -120,37 +120,16 @@ export function ParentOverview({
     if (!data)
       return {
         journey: [],
-        year2023: undefined,
-        year2024: undefined,
+        year: undefined,
         subjects: [],
       };
-    const previousBySubject = new Map(
-      data.subjectResults.items
-        .filter((item) => item.schoolYear === "2023/2024")
-        .map((item) => [item.subject, item]),
-    );
-    const subjects = data.subjectResults.items
-      .filter((item) => item.schoolYear === "2024/2025")
-      .map((item) => {
-        const previous = previousBySubject.get(item.subject);
-        return {
-          ...item,
-          previous,
-          delta:
-            item.average20 != null && previous?.average20 != null
-              ? item.average20 - previous.average20
-              : null,
-        };
-      });
+    const schoolYear = data.overview.schoolYear;
     return {
-      journey: [...data.journey.items].reverse(),
-      year2023: data.yearResults.items.find(
-        (item) => item.schoolYear === "2023/2024",
+      journey: data.journey.items.filter((item) => item.schoolYear === schoolYear),
+      year: data.yearResults.items.find((item) => item.schoolYear === schoolYear),
+      subjects: data.subjectResults.items.filter(
+        (item) => item.schoolYear === schoolYear,
       ),
-      year2024: data.yearResults.items.find(
-        (item) => item.schoolYear === "2024/2025",
-      ),
-      subjects,
     };
   }, [data]);
 
@@ -185,17 +164,17 @@ export function ParentOverview({
       icon: HeartHandshake,
     },
     journey: {
-      label: t("PARCOURS SCOLAIRE", "المسار الدراسي"),
-      title: t("Année après année", "سنة بعد سنة"),
+      label: t("ANNÉE SCOLAIRE", "السنة الدراسية الحالية"),
+      title: t("Inscription en cours", "التسجيل الحالي"),
       text: t(
-        "Les classes réellement enregistrées dans le dossier scolaire.",
-        "الأقسام المسجلة فعلياً في الملف المدرسي.",
+        "La classe enregistrée pour l’année scolaire en cours.",
+        "القسم المسجل للسنة الدراسية الحالية.",
       ),
       icon: History,
     },
     results: {
-      label: t("RÉSULTATS ET TENDANCES", "النتائج والتطور"),
-      title: t("Lire les notes avec leur contexte", "قراءة النقط في سياقها"),
+      label: t("RÉSULTATS ACTUELS", "النتائج الحالية"),
+      title: t("Lire les notes de cette année", "قراءة نقط هذه السنة"),
       text: t(
         "Des calculs indicatifs sur 20, accompagnés du nombre de notes utilisées.",
         "حسابات إرشادية على 20 مع عدد النقط المستخدمة.",
@@ -304,18 +283,16 @@ export function ParentOverview({
             </article>
             <article>
               <History size={20} />
-              <small>{t("PARCOURS", "المسار")}</small>
-              <strong>
-                {derived.journey.length} {t("années", "سنوات")}
-              </strong>
-              <span>{t("Dossier continu", "ملف متواصل")}</span>
+              <small>{t("ANNÉE CONSULTÉE", "السنة الدراسية المعروضة")}</small>
+              <strong>{data.overview.schoolYear}</strong>
+              <span>{t("Données de l’année en cours", "بيانات السنة الدراسية الحالية")}</span>
             </article>
             <article>
               <BarChart3 size={20} />
-              <small>2024/2025</small>
-              <strong>{formatScore(derived.year2024?.average20 ?? null)}/20</strong>
+              <small>{data.overview.schoolYear}</small>
+              <strong>{formatScore(derived.year?.average20 ?? null)}/20</strong>
               <span>
-                {derived.year2024?.noteCount ?? 0} {t("notes valides", "نقطة صالحة")}
+                {derived.year?.noteCount ?? 0} {t("notes valides", "نقطة صالحة")}
               </span>
             </article>
             <article className={absences ? "attention" : ""}>
@@ -347,32 +324,15 @@ export function ParentOverview({
         {focus === "results" ? (
           <>
             <div className="year-comparison">
-              {[derived.year2023, derived.year2024].map((item) =>
-                item ? (
-                  <article key={item.schoolYear}>
-                    <small>{item.schoolYear}</small>
-                    <strong>{formatScore(item.average20)}/20</strong>
-                    <span>
-                      {item.noteCount} {t("notes valides", "نقطة صالحة")}
-                    </span>
-                  </article>
-                ) : null,
-              )}
-              <div
-                className="comparison-arrow"
-                aria-label={t("Évolution", "التطور")}
-              >
-                <ArrowUpRight size={20} />
-                <strong>
-                  {derived.year2023?.average20 != null &&
-                  derived.year2024?.average20 != null
-                    ? formatScore(
-                        derived.year2024.average20 -
-                          derived.year2023.average20,
-                      )
-                    : "—"}
-                </strong>
-              </div>
+              {derived.year ? (
+                <article>
+                  <small>{derived.year.schoolYear}</small>
+                  <strong>{formatScore(derived.year.average20)}/20</strong>
+                  <span>
+                    {derived.year.noteCount} {t("notes valides", "نقطة صالحة")}
+                  </span>
+                </article>
+              ) : null}
             </div>
             <div className="subject-results">
               {derived.subjects.map((item) => (
@@ -380,7 +340,7 @@ export function ParentOverview({
                   <div className="subject-line">
                     <strong>{item.subject}</strong>
                     <span>
-                      {formatScore(item.previous?.average20 ?? null)} → {formatScore(item.average20)}
+                      {formatScore(item.average20)}/20
                     </span>
                   </div>
                   <progress
@@ -389,16 +349,13 @@ export function ParentOverview({
                     aria-label={`${item.subject} ${formatScore(item.average20)} sur 20`}
                   />
                   <small>
-                    {item.noteCount} {t("notes en 2024/2025", "نقطة في 2024/2025")}
-                    {item.delta != null
-                      ? ` · ${item.delta >= 0 ? "+" : ""}${formatScore(item.delta)}`
-                      : ""}
+                    {item.noteCount} {t("notes cette année", "نقطة هذه السنة")}
                   </small>
                 </article>
               ))}
             </div>
             <div className="term-strip">
-              {data.termResults.items.map((item) => (
+              {data.termResults.items.filter((item) => item.schoolYear === data.overview.schoolYear).map((item) => (
                 <span key={`${item.schoolYear}-${item.term}`}>
                   <small>
                     {item.schoolYear} · {item.term}

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Send,
   ImagePlus,
@@ -18,9 +19,15 @@ import {
   User,
   CheckCheck,
   Database,
+  Phone,
+  PhoneOff,
+  MicOff,
 } from "lucide-react";
 import { FoxAvatar, AlexandreAvatar } from "./avatars";
+import { CallWaveform } from "./call-waveform";
 import { ParentResponse } from "./parent-response";
+import { useDictation } from "@/hooks/use-dictation";
+import { useSpeech } from "@/hooks/use-speech";
 import type { Language, Message, Role } from "@/lib/contracts";
 
 const formatTime = (lang: Language) =>
@@ -57,32 +64,111 @@ export function Chat({
   const [draft, setDraft] = useState("");
   const [photo, setPhoto] = useState<string>();
   const [photoError, setPhotoError] = useState("");
-  const [reading, setReading] = useState(false);
-  const [recording, setRecording] = useState(false);
-  const [transcribing, setTranscribing] = useState(false);
   const [voiceError, setVoiceError] = useState("");
+  const [callOpen, setCallOpen] = useState(false);
+  const [callMuted, setCallMuted] = useState(false);
+  const [lastUtterance, setLastUtterance] = useState("");
+  const callOpenRef = useRef(false);
+  const callMutedRef = useRef(false);
+  const hangupRef = useRef<HTMLButtonElement>(null);
+  const endCallRef = useRef<() => void>(() => {});
   const [mountTime] = useState(() => formatTime(lang));
   const end = useRef<HTMLDivElement>(null);
   const file = useRef<HTMLInputElement>(null);
-  const recorder = useRef<MediaRecorder | null>(null);
-  const voiceStream = useRef<MediaStream | null>(null);
-  const voiceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
+  const dictation = useDictation(lang, (transcript) => {
+    if (callOpenRef.current) setLastUtterance(transcript);
+    const text = [draft.trim(), transcript].filter(Boolean).join(" ");
+    if (text.length > 2400 || busy) {
+      setDraft(text);
+      setVoiceError(t("Le message est conservé. Raccourcissez-le si nécessaire, puis envoyez-le.", "تم الاحتفاظ بالرسالة. اختصرها عند الحاجة ثم أرسلها."));
+      return;
+    }
+    onSend(text, photo);
+    setDraft("");
+    setPhoto(undefined);
+  });
+  const recording = dictation.status === "recording";
+  const starting = dictation.status === "starting";
+  const transcribing = dictation.status === "sending";
+  const voiceBusy = recording || starting || transcribing;
+  const lastReply = [...messages].reverse().find(m => m.role === "assistant") || { id: "intro", content: intro };
+  const speech = useSpeech(lang, lastReply, busy || voiceBusy, () => {
+    if (callOpenRef.current && !callMutedRef.current) void dictation.start(true);
+  });
+  function endCall() {
+    callOpenRef.current = false;
+    callMutedRef.current = false;
+    dictation.discard();
+    speech.disable();
+    setCallOpen(false);
+    setCallMuted(false);
+  }
+  endCallRef.current = endCall;
+  function openCall() {
+    if (busy || voiceBusy) return;
+    setVoiceError("");
+    setLastUtterance("");
+    callOpenRef.current = true;
+    callMutedRef.current = false;
+    setCallOpen(true);
+    setCallMuted(false);
+    speech.enableForCall();
+    void dictation.start(true);
+  }
+  function handleCallMicrophone() {
+    if (recording) {
+      callMutedRef.current = true;
+      setCallMuted(true);
+      void dictation.stop();
+      return;
+    }
+    if (starting) {
+      callMutedRef.current = true;
+      setCallMuted(true);
+      dictation.discard();
+      return;
+    }
+    if (transcribing) return;
+    if (busy) onCancel();
+    speech.stop();
+    callMutedRef.current = false;
+    setCallMuted(false);
+    setVoiceError("");
+    void dictation.start(true);
+  }
+  useEffect(() => {
+    if (!callOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    hangupRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") endCallRef.current();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [callOpen]);
+  const callStatus = starting
+      ? t("Ouverture du micro…", "جارٍ فتح الميكروفون…")
+      : recording
+        ? t("Je vous écoute", "أنا أستمع إليك")
+        : transcribing
+          ? t("Transcription en cours…", "جارٍ تحويل الكلام إلى نص…")
+          : busy
+            ? t("Je prépare ma réponse…", "أحضّر الإجابة…")
+            : speech.status === "loading"
+              ? t("La réponse arrive…", "الرد قادم…")
+              : speech.status === "playing"
+                ? t("Je vous réponds", "أجيبك الآن")
+                : callMuted
+                  ? t("Micro en pause. Touchez Parler pour reprendre.", "الميكروفون متوقف. اضغط تحدث للمتابعة.")
+                  : t("Prêt à parler", "جاهز للمحادثة");
   useEffect(() => {
     end.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [messages, busy]);
-  useEffect(
-    () => () => {
-      if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
-      if (voiceTimer.current) clearTimeout(voiceTimer.current);
-      if (recorder.current?.state === "recording") recorder.current.stop();
-      voiceStream.current?.getTracks().forEach((track) => track.stop());
-      if (audioCtxRef.current) void audioCtxRef.current.close();
-    },
-    [],
-  );
   useEffect(() => {
     if (!recording) return;
     const canvas = canvasRef.current;
@@ -95,7 +181,7 @@ export function Chat({
       canvas.height = Math.max(1, Math.round(canvas.clientHeight * dpr));
     };
     resize();
-    const analyser = analyserRef.current;
+    const analyser = dictation.analyser.current;
     const data = new Uint8Array(analyser ? analyser.frequencyBinCount : 64);
     const gradient = ctx2d.createLinearGradient(0, 0, 0, canvas.height || 1);
     gradient.addColorStop(0, "#8070c5");
@@ -120,7 +206,7 @@ export function Chat({
     };
     frame = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(frame);
-  }, [recording]);
+  }, [recording, dictation.analyser]);
   async function attach(value: File | undefined) {
     if (!value) return;
     setPhotoError("");
@@ -163,129 +249,18 @@ export function Chat({
       if (file.current) file.current.value = "";
     }
   }
-  async function toggleRecording() {
+  function toggleRecording() {
     setVoiceError("");
-    if (recording) {
-      recorder.current?.stop();
-      return;
+    if (recording) void dictation.stop();
+    else {
+      speech.stop();
+      void dictation.start();
     }
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-      setVoiceError(
-        t(
-          "Le micro n’est pas disponible dans ce navigateur.",
-          "الميكروفون غير متاح في هذا المتصفح.",
-        ),
-      );
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true },
-      });
-      const mimeType = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg", "audio/mp4"].find(
-        (candidate) => MediaRecorder.isTypeSupported(candidate),
-      );
-      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-      const chunks: BlobPart[] = [];
-      voiceStream.current = stream;
-      recorder.current = mediaRecorder;
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size) chunks.push(event.data);
-      };
-      mediaRecorder.onstop = async () => {
-        setRecording(false);
-        if (voiceTimer.current) clearTimeout(voiceTimer.current);
-        stream.getTracks().forEach((track) => track.stop());
-        voiceStream.current = null;
-        recorder.current = null;
-        analyserRef.current = null;
-        if (audioCtxRef.current) {
-          void audioCtxRef.current.close();
-          audioCtxRef.current = null;
-        }
-        const blob = new Blob(chunks, { type: mediaRecorder.mimeType || "audio/webm" });
-        if (blob.size < 200) return;
-        setTranscribing(true);
-        try {
-          const form = new FormData();
-          form.append("audio", blob, `alexandrebot.${blob.type.includes("ogg") ? "ogg" : blob.type.includes("mp4") ? "mp4" : "webm"}`);
-          form.append("lang", lang);
-          const response = await fetch("/api/transcribe", { method: "POST", body: form });
-          const result = (await response.json()) as { text?: unknown };
-          const transcript = typeof result.text === "string" ? result.text.trim() : "";
-          if (!response.ok || !transcript)
-            throw new Error();
-          setDraft((current) => [current.trim(), transcript].filter(Boolean).join(" "));
-        } catch {
-          setVoiceError(
-            t(
-              "Je n’ai pas pu transcrire cette fois. Réessaie en parlant près du micro.",
-              "تعذر تحويل الصوت هذه المرة. حاول مجدداً بالقرب من الميكروفون.",
-            ),
-          );
-        } finally {
-          setTranscribing(false);
-        }
-      };
-      mediaRecorder.start();
-      setRecording(true);
-      voiceTimer.current = setTimeout(() => mediaRecorder.stop(), 45_000);
-      try {
-        const AudioCtor =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext?: typeof AudioContext })
-            .webkitAudioContext;
-        if (AudioCtor) {
-          const audioCtx = new AudioCtor();
-          const source = audioCtx.createMediaStreamSource(stream);
-          const analyser = audioCtx.createAnalyser();
-          analyser.fftSize = 256;
-          analyser.smoothingTimeConstant = 0.8;
-          source.connect(analyser);
-          void audioCtx.resume().catch(() => {});
-          audioCtxRef.current = audioCtx;
-          analyserRef.current = analyser;
-        }
-      } catch {
-        /* la visualisation est optionnelle, l'enregistrement continue */
-      }
-    } catch {
-      setVoiceError(
-        t(
-          "Autorise le micro pour dicter ton message.",
-          "اسمح باستعمال الميكروفون لإملاء رسالتك.",
-        ),
-      );
-    }
-  }
-  function listen() {
-    if (typeof speechSynthesis === "undefined") {
-      setPhotoError(
-        t(
-          "La lecture audio n’est pas disponible dans ce navigateur.",
-          "القراءة الصوتية غير متاحة في هذا المتصفح.",
-        ),
-      );
-      return;
-    }
-    speechSynthesis.cancel();
-    if (reading) {
-      setReading(false);
-      return;
-    }
-    const text =
-      [...messages].reverse().find((m) => m.role === "assistant")?.content ||
-      intro;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang === "ar" ? "ar-MA" : "fr-FR";
-    utterance.rate = 0.9;
-    utterance.onend = () => setReading(false);
-    utterance.onerror = () => setReading(false);
-    setReading(true);
-    speechSynthesis.speak(utterance);
   }
   function submit() {
-    if (busy || (!draft.trim() && !photo)) return;
+    if (busy || voiceBusy || draft.length > 2400 || (!draft.trim() && !photo)) return;
+    dictation.discard();
+    speech.stop();
     onSend(
       draft.trim() ||
         t("Aide-moi à comprendre cette image.", "ساعدني على فهم هذه الصورة."),
@@ -295,13 +270,14 @@ export function Chat({
     setPhoto(undefined);
   }
   return (
+    <>
     <section className="chat-card" aria-label={t("Conversation", "المحادثة")}>
       <div className="chat-heading">
         <div className={`mini-avatar ${role}`}>
           {role === "student" ? (
-            <FoxAvatar speaking={busy} />
+            <FoxAvatar speaking={busy || speech.status === "playing"} />
           ) : (
-            <AlexandreAvatar speaking={busy} />
+            <AlexandreAvatar speaking={busy || speech.status === "playing"} />
           )}
         </div>
         <div>
@@ -334,12 +310,24 @@ export function Chat({
             <Bell size={17} />
           </span>
           <button
-            className="icon-button"
-            onClick={listen}
-            title={t("Écouter / arrêter", "استماع / إيقاف")}
-            aria-label={t("Écouter / arrêter", "استماع / إيقاف")}
+            type="button"
+            className="icon-button call-launch"
+            onClick={openCall}
+            disabled={busy || voiceBusy}
+            aria-label={t("Démarrer un appel avec l’avatar", "بدء مكالمة مع الشخصية")}
           >
-            {reading ? <VolumeX size={19} /> : <Volume2 size={19} />}
+            <Phone size={18} />
+            <span>{t("Appeler", "اتصال")}</span>
+          </button>
+          <button
+            className="icon-button voice-listen"
+            onClick={speech.toggle}
+            aria-pressed={speech.enabled}
+            title={t("Lire les réponses avec une voix de synthèse", "قراءة الإجابات بصوت اصطناعي")}
+            aria-label={t(speech.enabled ? "Désactiver la lecture des réponses" : "Entendre les réponses", speech.enabled ? "إيقاف قراءة الإجابات" : "استماع للإجابات")}
+          >
+            {speech.status === "loading" ? <LoaderCircle className="spin" size={19} /> : speech.enabled ? <VolumeX size={19} /> : <Volume2 size={19} />}
+            <span>{speech.enabled ? t("Son activé", "الصوت مفعّل") : t("Entendre", "استماع")}</span>
           </button>
         </div>
       </div>
@@ -451,21 +439,29 @@ export function Chat({
           {photoError}
         </p>
       ) : null}
-      {voiceError ? <p role="alert" className="voice-error">{voiceError}</p> : null}
+      {voiceError || dictation.error || speech.error ? <p role="alert" className="voice-error">{voiceError || dictation.error || speech.error}</p> : null}
+      {dictation.status === "failed" ? (
+        <div className="voice-recovery">
+          <button type="button" onClick={() => void dictation.retry()} disabled={busy}><RefreshCw size={15} />{t("Réessayer l’envoi", "إعادة الإرسال")}</button>
+          <button type="button" onClick={dictation.discard}>{t("Annuler la dictée", "إلغاء الإملاء")}</button>
+        </div>
+      ) : null}
+      {(voiceBusy || dictation.status === "failed") && dictation.partial ? <p className="voice-transcript" dir="auto">{dictation.partial}</p> : null}
+      {transcribing || starting ? <p className="voice-progress" role="status">{starting ? t("Ouverture du micro…", "جارٍ فتح الميكروفون…") : t("Envoi de votre message vocal…", "جارٍ إرسال رسالتك الصوتية…")}</p> : null}
       {contextHint && !photo ? (
         <div className="board-context-hint" role="status">
           <Sparkles size={14} />
           {contextHint}
         </div>
       ) : null}
-      {recording ? (
+      {recording && !callOpen ? (
         <div className="voice-visualizer" role="status">
           <span className="voice-dot" aria-hidden="true" />
           <canvas ref={canvasRef} aria-hidden="true" />
           <span className="voice-hint">
             {t(
-              "Parle, puis clique sur Arrêter",
-              "تحدّث، ثم اضغط على إيقاف",
+              "Parlez, puis Stop pour envoyer · 60 s maximum",
+              "تحدّث، ثم إيقاف للإرسال · ٦٠ ثانية كحد أقصى",
             )}
           </span>
         </div>
@@ -483,6 +479,7 @@ export function Chat({
         <textarea
           id="chat-message"
           value={draft}
+          disabled={voiceBusy}
           onChange={(e) => setDraft(e.target.value)}
           maxLength={2400}
           rows={2}
@@ -516,6 +513,7 @@ export function Chat({
               />
               <button
                 type="button"
+                disabled={voiceBusy}
                 onClick={() => file.current?.click()}
                 aria-label={t(
                   "Ajouter une photo d’exercice",
@@ -536,17 +534,17 @@ export function Chat({
               type="button"
               className={`voice-button ${recording ? "recording" : ""}`}
               onClick={() => void toggleRecording()}
-              disabled={busy || transcribing}
+              disabled={busy || transcribing || starting}
               aria-label={t(
-                recording ? "Arrêter la dictée" : "Dicter le message",
+                recording ? "Stop et envoyer" : "Dicter le message",
                 recording ? "إيقاف الإملاء" : "إملاء الرسالة",
               )}
               title={t(
-                recording ? "Arrêter la dictée" : "Dicter le message",
+                recording ? "Stop et envoyer" : "Dicter le message",
                 recording ? "إيقاف الإملاء" : "إملاء الرسالة",
               )}
             >
-              {transcribing ? (
+              {transcribing || starting ? (
                 <LoaderCircle className="spin" size={20} />
               ) : recording ? (
                 <CircleStop size={20} />
@@ -554,10 +552,10 @@ export function Chat({
                 <Mic size={20} />
               )}
               <span>
-                {transcribing
-                  ? t("Transcription…", "جارٍ التحويل…")
+                {transcribing || starting
+                  ? starting ? t("Micro…", "الميكروفون…") : t("Envoi…", "جارٍ الإرسال…")
                   : recording
-                    ? t("Arrêter", "إيقاف")
+                    ? t("Stop · envoyer", "إيقاف وإرسال")
                     : t("Dicter", "إملاء")}
               </span>
             </button>
@@ -575,7 +573,7 @@ export function Chat({
             <button
               className="send-button"
               type="submit"
-              disabled={!draft.trim() && !photo}
+              disabled={voiceBusy || draft.length > 2400 || (!draft.trim() && !photo)}
               aria-label={t("Envoyer", "إرسال")}
             >
               <Send size={19} />
@@ -594,5 +592,77 @@ export function Chat({
         )}
       </p>
     </section>
+    {callOpen && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            className={`avatar-call ${role}`}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t(`Appel avec ${role === "student" ? "Milo" : "Alexandre"}`, `مكالمة مع ${role === "student" ? "ميلو" : "ألكسندر"}`)}
+            dir={lang === "ar" ? "rtl" : "ltr"}
+            lang={lang}
+          >
+            <div className="avatar-call-inner">
+              <div className="avatar-call-topline">
+                <span className="avatar-call-live"><span aria-hidden="true" />{t("Conversation vocale", "محادثة صوتية")}</span>
+                <span>{role === "student" ? "Milo" : "Alexandre"}</span>
+              </div>
+              <div className={`avatar-call-portrait ${speech.status === "playing" ? "talking" : ""} ${recording && !callMuted ? "listening" : ""}`}>
+                {role === "student" ? (
+                  <FoxAvatar speaking={speech.status === "playing"} />
+                ) : (
+                  <AlexandreAvatar speaking={speech.status === "playing"} />
+                )}
+              </div>
+              <div className="avatar-call-content">
+                <h2>{role === "student" ? "Milo" : "Alexandre"}</h2>
+                <p className="avatar-call-status" role="status" aria-live="polite">{callStatus}</p>
+                <div className="avatar-call-signal">
+                  <CallWaveform
+                    analyser={recording ? dictation.analyser.current : speech.status === "playing" ? speech.analyser.current : null}
+                    speaker={recording ? "parent" : speech.status === "playing" ? "avatar" : "idle"}
+                    label={recording ? t("Niveau de votre voix", "مستوى صوتك") : speech.status === "playing" ? t("Niveau de la voix de l’avatar", "مستوى صوت الشخصية") : t("Audio en attente", "الصوت في الانتظار")}
+                  />
+                  <span>{recording ? t("Votre voix", "صوتك") : speech.status === "playing" ? t("Voix d’Alexandre", "صوت ألكسندر") : ""}</span>
+                </div>
+                {dictation.partial || lastUtterance ? (
+                  <p className="avatar-call-transcript" dir="auto">{dictation.partial || lastUtterance}</p>
+                ) : (
+                  <p className="avatar-call-hint">
+                    {t("Parlez naturellement. Une pause enverra votre question.", "تحدث بطبيعية. ستُرسل سؤالك بعد توقف قصير.")}
+                  </p>
+                )}
+                {lastReply.id !== "intro" ? <p className="avatar-call-reply" dir="auto">{lastReply.content}</p> : null}
+                {voiceError || dictation.error || speech.error || error ? (
+                  <div className="avatar-call-error" role="alert">
+                    <p>{voiceError || dictation.error || speech.error || error}</p>
+                    {dictation.status === "failed" ? (
+                      <button type="button" onClick={() => void dictation.retry()}>{t("Réessayer la transcription", "إعادة تحويل الكلام")}</button>
+                    ) : speech.error ? (
+                      <button type="button" onClick={speech.retry}>{t("Réécouter la réponse", "إعادة سماع الرد")}</button>
+                    ) : error ? (
+                      <button type="button" onClick={onRetry}>{t("Réessayer la réponse", "إعادة المحاولة")}</button>
+                    ) : dictation.status === "idle" && !callMuted ? (
+                      <button type="button" onClick={handleCallMicrophone}>{t("Réessayer le micro", "إعادة تشغيل الميكروفون")}</button>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+              <div className="avatar-call-controls">
+                <button type="button" className={`avatar-call-mute ${callMuted ? "is-muted" : ""}`} onClick={handleCallMicrophone} disabled={transcribing}>
+                  {recording ? <MicOff size={23} /> : <Mic size={23} />}
+                  <span>{recording ? t("Envoyer", "إرسال") : starting ? t("Couper le micro", "إيقاف الميكروفون") : transcribing ? t("Envoi…", "جارٍ الإرسال…") : t("Parler", "تحدث")}</span>
+                </button>
+                <button ref={hangupRef} type="button" className="avatar-call-end" onClick={endCall}>
+                  <PhoneOff size={23} />
+                  <span>{t("Terminer", "إنهاء")}</span>
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null}
+    </>
   );
 }

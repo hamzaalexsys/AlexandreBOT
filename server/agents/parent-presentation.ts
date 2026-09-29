@@ -26,6 +26,26 @@ const itemsFor = (facts: ParentFact[], tool: string) => {
   const data = record(facts.find((fact) => fact.tool === tool)?.data);
   return Array.isArray(data.items) ? data.items.map(record) : [];
 };
+const currentSchoolYearFor = (facts: ParentFact[]) =>
+  text(record(facts.find((fact) => fact.tool === "read_child_overview")?.data).schoolYear);
+const schoolYears = (value: string) =>
+  plain(value).match(/\b20\d{2}\s*\/\s*20\d{2}\b/g) ?? [];
+const outsideCurrentSchoolYear = (question: string, currentSchoolYear: string) => {
+  const q = plain(question);
+  const current = plain(currentSchoolYear).replace(/\s/g, "");
+  return (
+    schoolYears(question).some((year) => year.replace(/\s/g, "") !== current) ||
+    /(annee derniere|annee passee|annee precedente|l.?an dernier|السنة الماضية|السنة السابقة)/.test(q)
+  );
+};
+const currentYearScopeComponent = (lang: Language, schoolYear: string) => ({
+  kind: "empty" as const,
+  title: lang === "fr" ? "Données scolaires" : "المعطيات المدرسية",
+  detail:
+    lang === "fr"
+      ? `Seules les données de l’année scolaire en cours (${schoolYear}) sont disponibles.`
+      : `تتوفر فقط معطيات السنة الدراسية الجارية (${schoolYear}).`,
+});
 const translateSubject = (value: unknown, lang: Language) => {
   const subject = text(value);
   const key = plain(subject);
@@ -504,6 +524,14 @@ export function parentPresentationFromRequest(
   request: ParentPresentationRequest,
   question = "",
 ): ParentPresentation | null {
+  const currentSchoolYear = currentSchoolYearFor(facts);
+  if (
+    outsideCurrentSchoolYear(question, currentSchoolYear) ||
+    (text(request.schoolYear) &&
+      plain(text(request.schoolYear)).replace(/\s/g, "") !==
+        plain(currentSchoolYear).replace(/\s/g, ""))
+  )
+    return currentYearScopeComponent(lang, currentSchoolYear);
   const labels = { title: request.title, caption: request.caption };
   const filters = {
     subject: request.subject ?? undefined,
@@ -551,6 +579,10 @@ export function parentPresentationFor(
   lang: Language,
 ): ParentPresentation | null {
   const q = plain(question);
+  const currentSchoolYear = currentSchoolYearFor(facts);
+
+  if (outsideCurrentSchoolYear(question, currentSchoolYear))
+    return currentYearScopeComponent(lang, currentSchoolYear);
 
   if (/(devoir|travail.{0,20}(demain|maison))/.test(q))
     return homeworkComponent(facts, lang, q.includes("demain"));

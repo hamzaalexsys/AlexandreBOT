@@ -45,11 +45,12 @@ export async function POST(req: Request) {
         "AI_TOOL_LIMIT",
         "AI_EMPTY",
         "AI_PROVIDER_UNAVAILABLE",
+        "SCHOOL_UNAVAILABLE",
       ].includes(code)
         ? code
         : "other",
     );
-    const known = ["AI_NOT_CONFIGURED", "AI_BUSY", "AI_PROVIDER_UNAVAILABLE"];
+    const known = ["AI_NOT_CONFIGURED", "AI_BUSY", "AI_PROVIDER_UNAVAILABLE", "SCHOOL_UNAVAILABLE"];
     return Response.json(
       { error: known.includes(code) ? code : "AI_UNAVAILABLE" },
       { status: 503, headers },

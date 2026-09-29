@@ -7,6 +7,7 @@ export async function GET(req: Request) {
   const session = await getSession(req);
   if (!session || session.role !== "parent")
     return Response.json({ error: "FORBIDDEN" }, { status: 403 });
+  try {
   const lang = new URL(req.url).searchParams.get("lang") === "ar" ? "ar" : "fr";
   const repo = repositoryFor(session);
   const sections: SchoolRead[] = [
@@ -56,4 +57,8 @@ export async function GET(req: Request) {
     },
     { headers: { "Cache-Control": "no-store" } },
   );
+  } catch (error) {
+    console.warn("SCHOOL_READ_FAILURE", error instanceof Error ? error.message : "unknown");
+    return Response.json({ error: "SCHOOL_UNAVAILABLE" }, { status: 503, headers: { "Cache-Control": "no-store" } });
+  }
 }
