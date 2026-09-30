@@ -53,20 +53,5 @@ console.log('PASS physics, gravity comparison, pendulum, notebook continuity and
   platform: "node",
   format: "esm",
   outfile: ".sites-runtime/check-core.mjs",
-  plugins: [
-    {
-      name: "cloudflare-test-env",
-      setup(context) {
-        context.onResolve({ filter: /^cloudflare:workers$/ }, () => ({
-          path: "cloudflare-test-env",
-          namespace: "alexandrebot-test",
-        }));
-        context.onLoad(
-          { filter: /.*/, namespace: "alexandrebot-test" },
-          () => ({ contents: "export const env = {};", loader: "js" }),
-        );
-      },
-    },
-  ],
 });
 await import(pathToFileURL(resolve(".sites-runtime/check-core.mjs")).href);

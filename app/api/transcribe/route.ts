@@ -1,4 +1,4 @@
-import { env } from "cloudflare:workers";
+import { env } from "@/lib/server-env";
 import { getSession, sameOrigin } from "@/server/auth/session";
 import { TRANSCRIPTION_MODEL, transcriptionOptions } from "@/server/voice/config";
 

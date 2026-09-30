@@ -1,4 +1,4 @@
-import { env } from "cloudflare:workers";
+import { env } from "@/lib/server-env";
 import type { Session } from "../auth/session";
 import type { Language } from "@/lib/contracts";
 import { createSchoolGatewayClient } from "./gateway-client";

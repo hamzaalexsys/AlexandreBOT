@@ -1,4 +1,4 @@
-import { env } from "cloudflare:workers";
+import { env } from "@/lib/server-env";
 import type { Role } from "@/lib/contracts";
 export type Session = {
   role: Role;
