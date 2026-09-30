@@ -61,7 +61,7 @@ const translateSubject = (value: unknown, lang: Language) => {
   if (key.includes("mathematique")) return "Mathématiques";
   return subject || (lang === "fr" ? "Non précisée" : "غير محددة");
 };
-const dateLabel = (value: unknown, lang: Language) => {
+const dateLabel = (value: unknown, lang: Language, month: "short" | "long" = "short") => {
   const raw = text(value).slice(0, 10);
   const parsed = /^\d{4}-\d{2}-\d{2}$/.test(raw)
     ? new Date(`${raw}T00:00:00Z`)
@@ -70,7 +70,7 @@ const dateLabel = (value: unknown, lang: Language) => {
     return raw || (lang === "fr" ? "Date non renseignée" : "التاريخ غير مسجل");
   return new Intl.DateTimeFormat(lang === "fr" ? "fr-FR" : "ar-MA", {
     day: "numeric",
-    month: "short",
+    month,
     year: "numeric",
     timeZone: "UTC",
   }).format(parsed);
@@ -148,7 +148,7 @@ const homeworkComponent = (
     kind: "tasks" as const,
     title: tr("Devoirs à préparer", "الواجبات المطلوب تحضيرها"),
     items: items.slice(0, 12).map((item) => ({
-      dueDate: dateLabel(item.dueDate || item.publishedAt, lang),
+      dueDate: dateLabel(item.dueDate, lang, "long"),
       subject: translateSubject(item.subject, lang),
       description: text(item.description) || tr("Consigne non renseignée", "التعليمات غير مسجلة"),
     })),
