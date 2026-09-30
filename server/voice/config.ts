@@ -1,6 +1,6 @@
 export const TRANSCRIPTION_MODEL = "openai/gpt-4o-transcribe";
-export const SPEECH_MODEL = "google/gemini-3.8-flash-tts";
-export const SPEECH_VOICE = "Achird";
+export const SPEECH_MODEL = "x-ai/grok-voice-tts-1.0";
+export const SPEECH_VOICE = "sal";
 
 export function transcriptionOptions(language: "fr" | "ar", context: string, vocabulary = "") {
   const names = "Fahd, Hamza, Aamar, Amine, Youssef, Yassine, Mohamed, Mohammed, Mehdi, Ayoub, Imane, Salma, Fatima, Khadija, Hajar, Maryam, Zineb, فهد، حمزة، يوسف، ياسين، أمين، محمد";

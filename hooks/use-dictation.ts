@@ -118,7 +118,7 @@ export function useDictation(lang: Language, onTranscript: (text: string) => voi
     catch {
       if (current.controller.signal.aborted) return;
       setStatus("failed");
-      setError(lang === "fr" ? "La transcription reste indisponible. Réessayez ou saisissez votre message." : "تحويل الصوت غير متاح حالياً. حاول مجدداً أو اكتب رسالتك.");
+      setError(lang === "fr" ? "La transcription reste indisponible. Réessayez ou redictez votre message." : "تحويل الصوت غير متاح حالياً. حاول مجدداً أو أعد إملاء رسالتك.");
     }
     finally { current.retrying = false; }
   };

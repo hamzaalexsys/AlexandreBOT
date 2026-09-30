@@ -68,3 +68,10 @@ test("school-year data is dynamically limited to the active enrollment year", ()
     "teachers must be scoped to the active class",
   );
 });
+test("homework includes every active document type in the authorised class and year", () => {
+  assert.match(queries.homework, /FROM dbo\.VDocementPartageType d/);
+  assert.match(queries.homework, /d\.Document_Flag=1/);
+  assert.match(queries.homework, /d\.Classe_ID=/);
+  assert.match(queries.homework, /d\.Annee_ID=/);
+  assert.doesNotMatch(queries.homework, /DocumentPartageType_Libelle\s*=/);
+});

@@ -25,11 +25,11 @@ La configuration web attend `SESSION_SECRET`, `OPENROUTER_API_KEY`, `OPENROUTER_
 
 ## Conversation vocale
 
-Cliquer **Dicter**, parler, puis **Stop · envoyer** : la question est envoyée automatiquement, sans clic supplémentaire. Les phrases sont transcrites pendant les pauses ; au Stop, seule la fin encore en cours attend sa transcription. L’aperçu apparaît pendant la dictée. Une dictée dure au maximum 60 secondes. En cas d’échec réseau, **Réessayer l’envoi** réutilise les portions échouées gardées en mémoire ; aucun message incomplet n’est envoyé.
+La conversation s'ouvre directement en mode vocal, sur ordinateur et sur mobile. Cliquer **Parler**, attendre l'ouverture du micro, poser sa question, puis cliquer **Stop** : la question est envoyée automatiquement. Les phrases sont transcrites pendant les pauses ; au Stop, seule la fin encore en cours attend sa transcription. Une dictée dure au maximum 60 secondes. En cas d'échec réseau, **Réessayer l'envoi** réutilise les portions échouées gardées en mémoire ; aucun message incomplet n'est envoyé.
 
-**Entendre** active une voix de synthèse et la lecture automatique des réponses suivantes. Cliquer à nouveau désactive le son. Le micro coupe la lecture en cours pour éviter de retranscrire l’assistant. La voix arrive en flux audio, sans attendre la génération complète. Une nouvelle conversation ou un changement de langue arrête les requêtes audio en cours.
+La réponse est lue automatiquement. Cliquer **Parler** pendant que l'avatar répond coupe immédiatement sa voix et ouvre le micro pour une nouvelle question. La voix arrive en flux audio, sans attendre la génération complète. Une nouvelle conversation ou un changement de langue arrête les requêtes audio en cours.
 
-Les valeurs par défaut sont `openai/gpt-4o-transcribe` pour la reconnaissance et `x-ai/grok-voice-tts-1.0`, voix `rex`, pour la synthèse française/arabe. Elles utilisent la clé OpenRouter existante. `OPENROUTER_VOICE_VOCABULARY` peut ajouter les prénoms et termes propres à l’école au contexte de reconnaissance. Ce sont des indications, jamais une substitution forcée dans le texte. Le lecteur attend du PCM mono 24 kHz ; un autre modèle TTS doit prendre en charge ce format. Les valeurs configurables sont documentées dans `.env.example`.
+Les valeurs par défaut sont `openai/gpt-4o-transcribe` pour la reconnaissance et `x-ai/grok-voice-tts-1.0`, voix `sal`, pour la synthèse française/arabe. Elles utilisent la clé OpenRouter existante. `OPENROUTER_VOICE_VOCABULARY` peut ajouter les prénoms et termes propres à l'école au contexte de reconnaissance. Ce sont des indications, jamais une substitution forcée dans le texte. Le lecteur attend du PCM mono 24 kHz ; un autre modèle TTS doit prendre en charge ce format. Les valeurs configurables sont documentées dans `.env.example`.
 
 Le micro nécessite un navigateur récent avec AudioWorklet, sur localhost ou HTTPS. La reconnaissance des accents et du bruit ambiant reste à vérifier sur le micro de présentation. La latence réseau et le temps de réponse de l’agent scolaire s’ajoutent à la transcription.
 
@@ -38,7 +38,7 @@ Le micro nécessite un navigateur récent avec AudioWorklet, sur localhost ou HT
 1. Choisir **Je suis élève**. Une nouvelle page vide s’ouvre ; les anciennes pages restent dans le carnet.
 2. Ouvrir un des **Labos magiques de Milo** : mélanger les lumières RGB, construire un polygone ou faire bondir Milo sur une droite numérique. Les curseurs et animations réagissent immédiatement.
 3. Demander à Milo : « Montre-moi pourquoi un ballon rebondit et sa trajectoire. » Modifier ensuite la hauteur, Terre/Lune, puis revenir à une ancienne page.
-4. Demander un dessin libre animé, toucher une figure et dessiner au doigt. Dès qu’un trait existe, la question suivante transmet automatiquement une capture du tableau à Milo ; **Expliquer mon dessin** permet aussi de l’interroger directement. Une équation concrète est transmise au solveur vérifié. Une photo d’exercice peut être expliquée par le modèle vision.
+4. Demander un dessin libre animé, toucher une figure et dessiner au doigt. Dès qu'un trait existe, la question suivante transmet automatiquement une capture du tableau à Milo ; **Expliquer mon dessin** permet aussi de l'interroger directement. Une équation concrète est transmise au solveur vérifié.
 5. Passer en arabe : l’interface devient RTL et les nouvelles réponses sont en arabe.
 6. Changer d’espace et choisir **Je suis parent**. Le clic reste dans l’espace Alexandre.
 7. Consulter la fiche reelle d'Aamar en lecture seule, puis demander ses resultats, sa classe ou son absence pour l'annee scolaire en cours. Les annees precedentes ne sont pas accessibles. La fiche de gauche suit le sujet de la conversation.

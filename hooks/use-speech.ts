@@ -44,7 +44,7 @@ export function useSpeech(
       if (!controller.signal.aborted) finished.current?.();
     } catch {
       if (!controller.signal.aborted) {
-        setError(lang === "fr" ? "La lecture vocale n’a pas abouti. Cliquez sur Entendre pour réessayer." : "تعذرت القراءة الصوتية. اضغط على استماع للمحاولة مجدداً.");
+        setError(lang === "fr" ? "La lecture vocale n’a pas abouti. Touchez Réécouter pour réessayer." : "تعذرت القراءة الصوتية. اضغط على إعادة الاستماع للمحاولة مجدداً.");
         setEnabled(false);
       }
     } finally {

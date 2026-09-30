@@ -3351,3 +3351,166 @@
     scroll-behavior: auto !important;
   }
 }
+
+.chat-card.voice-call-card {
+  height: auto;
+  min-height: 620px;
+  max-height: none;
+  color: #f8fbf3;
+  background: radial-gradient(circle at 50% 37%, #3b6655 0, #213f3b 48%, #11252b 100%);
+  border: 1px solid #31574e;
+  box-shadow: 0 16px 42px #1839312a;
+}
+.chat-card.voice-call-card.student {
+  background: radial-gradient(circle at 50% 37%, #625589 0, #2d385c 50%, #18243d 100%);
+  border-color: #514976;
+}
+.voice-call-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 28px 0;
+  color: #e9f1e6d6;
+  font-size: 14px;
+  font-weight: 700;
+}
+.voice-call-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  padding: 25px 30px 0;
+  text-align: center;
+}
+.voice-call-card .avatar-call-portrait {
+  width: clamp(190px, 29vh, 248px);
+  height: clamp(190px, 29vh, 248px);
+  margin: 0 0 18px;
+}
+.voice-call-card.student .avatar-call-portrait {
+  background: radial-gradient(circle at 50% 42%, #fff2dc 0 48%, #f7d5c3 70%, #d4add6 100%);
+}
+.voice-call-main h2 {
+  margin: 0 0 4px;
+  font-size: clamp(28px, 4vw, 36px);
+  line-height: 1.2;
+}
+.voice-call-status {
+  min-height: 1.6em;
+  margin: 0;
+  color: #dcf0d7;
+  font-size: 17px;
+}
+.voice-call-signal {
+  height: 60px;
+  margin: 5px 0 8px;
+}
+.voice-call-signal span {
+  display: block;
+  min-height: 18px;
+  color: #dcecdcc9;
+  font-size: 12px;
+}
+.voice-call-transcript,
+.voice-call-hint,
+.voice-call-reply,
+.voice-call-context {
+  width: min(100%, 550px);
+  margin: 7px 0;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.voice-call-transcript {
+  color: #fff;
+  font-size: 16px;
+}
+.voice-call-transcript span,
+.voice-call-reply span {
+  font-weight: 800;
+}
+.voice-call-hint,
+.voice-call-context {
+  color: #dde9ddca;
+  font-size: 14px;
+}
+.voice-call-reply {
+  max-height: 7.5em;
+  overflow-y: auto;
+  color: #e8f0e4;
+  font-size: 15px;
+  scrollbar-color: #b9cdb488 transparent;
+}
+.voice-call-error {
+  width: min(100%, 480px);
+  margin: 8px 0;
+  color: #fff4e6;
+  font-size: 14px;
+}
+.voice-call-error p { margin: 0 0 8px; }
+.voice-call-error button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 7px 12px;
+  color: inherit;
+  border: 1px solid #fff9;
+  border-radius: 10px;
+  background: #ffffff1a;
+  font-weight: 700;
+}
+.voice-call-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 18px 24px 26px;
+}
+.voice-call-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 170px;
+  min-height: 64px;
+  padding: 12px 26px;
+  color: #193b35;
+  border-radius: 20px;
+  background: #c8efd0;
+  box-shadow: 0 8px 24px #061e2455;
+  font-size: 19px;
+  font-weight: 900;
+}
+.voice-call-button:hover:not(:disabled) { background: #e0f8df; }
+.voice-call-button.is-recording { color: #fff; background: #e8595c; }
+.voice-call-button.is-recording:hover { background: #d94a4d; }
+.voice-call-button:disabled { opacity: .7; cursor: wait; }
+.voice-call-button:focus-visible,
+.voice-call-error button:focus-visible { outline: 3px solid #bff0c9; outline-offset: 3px; }
+.voice-call-footer small { color: #d5e9d3b8; font-size: 12px; }
+@media (max-width: 640px) {
+  .chat-card.voice-call-card { min-height: 560px; }
+  .voice-call-topline { padding: 20px 20px 0; }
+  .voice-call-main { padding: 25px 20px 0; }
+  .voice-call-card .avatar-call-portrait { width: 185px; height: 185px; }
+  .voice-call-footer { padding-bottom: 24px; }
+  .voice-call-button { min-width: 185px; }
+}
+@media (max-height: 740px) {
+  .chat-card.voice-call-card { min-height: 0; }
+  .voice-call-topline { padding-top: 14px; }
+  .voice-call-main { padding-top: 12px; }
+  .voice-call-card .avatar-call-portrait { width: 145px; height: 145px; margin-bottom: 8px; }
+  .voice-call-main h2 { font-size: 27px; }
+  .voice-call-status { font-size: 15px; }
+  .voice-call-signal { height: 44px; margin: 2px 0; }
+  .voice-call-hint { margin: 2px 0; }
+  .voice-call-footer { padding-top: 10px; padding-bottom: 14px; }
+  .voice-call-button { min-height: 56px; }
+}
+@media (max-height: 600px) {
+  .voice-call-card .avatar-call-portrait { width: 120px; height: 120px; }
+  .voice-call-hint, .voice-call-footer small { display: none; }
+  .voice-call-footer { padding-top: 5px; }
+}

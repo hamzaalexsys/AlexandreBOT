@@ -124,8 +124,8 @@ try {
   assert.equal(voice.headers.get("cache-control"), "no-store");
   assert.equal((await voice.arrayBuffer()).byteLength, 4);
   assert.equal(payloads[1].input, "Bonjour Hamza.");
-  assert.equal(payloads[1].model, "google/gemini-3.8-flash-tts");
-  assert.equal(payloads[1].voice, "Achird");
+  assert.equal(payloads[1].model, "x-ai/grok-voice-tts-1.0");
+  assert.equal(payloads[1].voice, "sal");
   assert.equal(payloads[1].response_format, "pcm");
   const invalid = await speech(new Request("http://localhost/api/speech", { method: "POST", headers: { cookie }, body: JSON.stringify({ text: "x".repeat(4501), lang: "fr" }) }));
   assert.equal(invalid.status, 400);
